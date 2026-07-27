@@ -62,6 +62,11 @@ export function createEditor(
     search(),
     urlHoverTooltip,
     smartTypographyHandler,
+    EditorView.contentAttributes.of({
+      spellcheck: "true",
+      autocapitalize: "sentences",
+      lang: "en",
+    }),
     EditorView.theme({ "&": { backgroundColor: "transparent" } }),
   ];
 
