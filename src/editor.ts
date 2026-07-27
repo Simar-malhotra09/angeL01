@@ -16,6 +16,9 @@ import { resolveTypographyInsert } from "./smart-typography";
 import { urlHoverTooltip } from "./url-tooltip";
 import { toggleBold, toggleItalic, makeToggleHeading } from "./formatting-commands";
 import { markdownDecorations } from "./formatting-decorations";
+import { imageHoverTooltip } from "./image-tooltip";
+import { insertImageFile } from "./image-insert";
+import { isSupportedImageType, IMAGE_FILE_ACCEPT } from "./image-format";
 
 export interface EditorCallbacks {
   onChange: (text: string) => void;
@@ -27,6 +30,20 @@ export function createEditor(
   initialDoc: string,
   callbacks: EditorCallbacks,
 ): EditorView {
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = IMAGE_FILE_ACCEPT;
+  fileInput.style.display = "none";
+  parent.appendChild(fileInput);
+
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files?.[0];
+    fileInput.value = "";
+    if (file) {
+      void insertImageFile(view, file, view.state.selection.main.head);
+    }
+  });
+
   const changeListener = EditorView.updateListener.of((update) => {
     if (update.docChanged) {
       const text = update.state.doc.toString();
@@ -64,6 +81,13 @@ export function createEditor(
       { key: "Mod-Alt-1", run: makeToggleHeading(1) },
       { key: "Mod-Alt-2", run: makeToggleHeading(2) },
       { key: "Mod-Alt-3", run: makeToggleHeading(3) },
+      {
+        key: "Mod-Shift-i",
+        run: () => {
+          fileInput.click();
+          return true;
+        },
+      },
     ]),
     keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
     placeholder("Start writing..."),
@@ -74,8 +98,35 @@ export function createEditor(
     scrollPastEnd(),
     search(),
     urlHoverTooltip,
+    imageHoverTooltip,
     smartTypographyHandler,
     markdownDecorations,
+    EditorView.domEventHandlers({
+      paste: (event, view) => {
+        const file = event.clipboardData?.files[0];
+        if (!file || !isSupportedImageType(file.type)) {
+          return false;
+        }
+        event.preventDefault();
+        void insertImageFile(view, file, view.state.selection.main.head);
+        return true;
+      },
+      dragover: (event) => {
+        if (event.dataTransfer?.types.includes("Files")) {
+          event.preventDefault();
+        }
+      },
+      drop: (event, view) => {
+        const file = event.dataTransfer?.files[0];
+        if (!file || !isSupportedImageType(file.type)) {
+          return false;
+        }
+        event.preventDefault();
+        const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+        void insertImageFile(view, file, pos ?? view.state.selection.main.head);
+        return true;
+      },
+    }),
     EditorView.contentAttributes.of({
       spellcheck: "true",
       autocapitalize: "sentences",
@@ -86,5 +137,6 @@ export function createEditor(
 
   const state = EditorState.create({ doc: initialDoc, extensions });
 
-  return new EditorView({ state, parent });
+  const view = new EditorView({ state, parent });
+  return view;
 }
