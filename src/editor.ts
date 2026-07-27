@@ -82,7 +82,7 @@ export function createEditor(
       { key: "Mod-Alt-2", run: makeToggleHeading(2) },
       { key: "Mod-Alt-3", run: makeToggleHeading(3) },
       {
-        key: "Mod-Shift-i",
+        key: "Mod-Shift-m",
         run: () => {
           fileInput.click();
           return true;
