@@ -14,7 +14,7 @@ import { saveDraft } from "./storage";
 import { vim } from "@replit/codemirror-vim";
 import { resolveTypographyInsert } from "./smart-typography";
 import { urlHoverTooltip } from "./url-tooltip";
-import { toggleBold, toggleItalic, makeToggleHeading } from "./formatting-commands";
+import { toggleBold, toggleItalic, makeToggleHeading, insertLink } from "./formatting-commands";
 import { markdownDecorations } from "./formatting-decorations";
 import { imageHoverTooltip } from "./image-tooltip";
 import { insertImageFile } from "./image-insert";
@@ -81,6 +81,7 @@ export function createEditor(
       { key: "Mod-Alt-1", run: makeToggleHeading(1) },
       { key: "Mod-Alt-2", run: makeToggleHeading(2) },
       { key: "Mod-Alt-3", run: makeToggleHeading(3) },
+      { key: "Mod-Alt-k", run: insertLink },
       {
         key: "Mod-Shift-m",
         run: () => {
