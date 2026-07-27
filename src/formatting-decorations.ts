@@ -6,6 +6,7 @@ import {
   ViewPlugin,
   type ViewUpdate,
 } from "@codemirror/view";
+import { parseHeading } from "./headings";
 
 const markDeco = Decoration.mark({ class: "cm-md-mark" });
 const hiddenDeco = Decoration.replace({});
@@ -17,7 +18,6 @@ const headingLineDeco = [1, 2, 3].map((level) =>
 
 const BOLD_RE = /\*\*([^\n*]+)\*\*/g;
 const ITALIC_RE = /(?<!\*)\*([^\n*]+)\*(?!\*)/g;
-const HEADING_RE = /^(#{1,3}) /;
 
 interface DecoSpec {
   from: number;
@@ -39,9 +39,9 @@ function collectLineSpecs(
   lineText: string,
   selectionRanges: readonly SelectionRange[],
 ): DecoSpec[] {
-  const headingMatch = HEADING_RE.exec(lineText);
-  if (headingMatch) {
-    const level = headingMatch[1]!.length;
+  const heading = parseHeading(lineText);
+  if (heading) {
+    const level = heading.level;
     const markerEnd = lineFrom + level + 1;
     const active = touchesSelection(selectionRanges, lineFrom, lineTo);
     return [

@@ -1,5 +1,6 @@
 import { EditorSelection } from "@codemirror/state";
 import type { Command } from "@codemirror/view";
+import { parseHeading } from "./headings";
 
 const BOLD_MARK = "**";
 const ITALIC_MARK = "*";
@@ -56,18 +57,11 @@ function toggleWrap(mark: string): Command {
 export const toggleBold: Command = toggleWrap(BOLD_MARK);
 export const toggleItalic: Command = toggleWrap(ITALIC_MARK);
 
-const HEADING_PREFIX = /^(#{1,3}) /;
-
-function headingLevel(lineText: string): number {
-  const match = HEADING_PREFIX.exec(lineText);
-  return match ? match[1]!.length : 0;
-}
-
 export function makeToggleHeading(level: 1 | 2 | 3): Command {
   return (view) => {
     const { state } = view;
     const line = state.doc.lineAt(state.selection.main.head);
-    const currentLevel = headingLevel(line.text);
+    const currentLevel = parseHeading(line.text)?.level ?? 0;
     const prefixEnd = currentLevel > 0 ? line.from + currentLevel + 1 : line.from;
     const insert = currentLevel === level ? "" : "#".repeat(level) + " ";
 
