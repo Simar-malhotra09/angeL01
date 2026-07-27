@@ -1,0 +1,93 @@
+:root {
+  --bg: #faf8f4;
+  --fg: #2b2822;
+  --faint: #a39f92;
+  --accent: #b5624a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+#statusbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 24px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+  pointer-events: none;
+}
+
+#editor-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+#editor-shell {
+  width: 100%;
+  max-width: 700px;
+  padding: 14vh 8px 20vh 8px;
+}
+
+.cm-editor,
+.cm-editor.cm-focused {
+  outline: none !important;
+}
+
+.cm-content {
+  font-family: "iA Writer Duospace", Georgia, "Iowan Old Style", serif;
+  font-size: 19px;
+  line-height: 1.75;
+  padding: 0 !important;
+  caret-color: var(--accent);
+}
+
+.cm-line {
+  padding: 0 !important;
+}
+
+.cm-gutters {
+  display: none !important;
+}
+
+.cm-scroller {
+  font-family: inherit;
+}
+
+.cm-selectionBackground {
+  background: rgba(181, 98, 74, 0.15) !important;
+}
+
+.cm-cursor {
+  border-left-width: 2px !important;
+  border-color: var(--accent) !important;
+}
+
+.cm-activeLine {
+  background: transparent !important;
+}
+
+::placeholder {
+  color: var(--faint);
+}
