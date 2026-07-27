@@ -5,6 +5,7 @@ import {
   placeholder,
   highlightActiveLine,
   scrollPastEnd,
+  type ViewUpdate,
 } from "@codemirror/view";
 import { EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
@@ -18,6 +19,7 @@ import { markdownDecorations } from "./formatting-decorations";
 
 export interface EditorCallbacks {
   onChange: (text: string) => void;
+  onUpdate: (update: ViewUpdate) => void;
 }
 
 export function createEditor(
@@ -26,12 +28,14 @@ export function createEditor(
   callbacks: EditorCallbacks,
 ): EditorView {
   const changeListener = EditorView.updateListener.of((update) => {
-    if (!update.docChanged) {
-      return;
+    if (update.docChanged) {
+      const text = update.state.doc.toString();
+      saveDraft(text);
+      callbacks.onChange(text);
     }
-    const text = update.state.doc.toString();
-    saveDraft(text);
-    callbacks.onChange(text);
+    if (update.docChanged || update.selectionSet) {
+      callbacks.onUpdate(update);
+    }
   });
 
   const smartTypographyHandler = EditorView.inputHandler.of((view, from, to, text) => {
