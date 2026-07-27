@@ -153,7 +153,8 @@ body {
   font-size: 1.15em;
 }
 
-.cm-md-image-label {
+.cm-md-image-label,
+.cm-md-link-label {
   color: var(--accent);
   border-bottom: 1px dotted var(--accent);
 }

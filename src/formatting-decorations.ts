@@ -7,12 +7,14 @@ import {
   type ViewUpdate,
 } from "@codemirror/view";
 import { parseHeading } from "./headings";
+import { LINK_RE } from "./links";
 
 const markDeco = Decoration.mark({ class: "cm-md-mark" });
 const hiddenDeco = Decoration.replace({});
 const boldTextDeco = Decoration.mark({ class: "cm-md-bold" });
 const italicTextDeco = Decoration.mark({ class: "cm-md-italic" });
 const imageLabelDeco = Decoration.mark({ class: "cm-md-image-label" });
+const linkLabelDeco = Decoration.mark({ class: "cm-md-link-label" });
 const headingLineDeco = [1, 2, 3].map((level) =>
   Decoration.line({ class: `cm-md-heading-${level}` }),
 );
@@ -93,6 +95,20 @@ function collectLineSpecs(
     specs.push(
       { from: start, to: labelStart, deco: markerDeco(active) },
       { from: labelStart, to: labelEnd, deco: imageLabelDeco },
+      { from: labelEnd, to: end, deco: markerDeco(active) },
+    );
+  }
+
+  LINK_RE.lastIndex = 0;
+  while ((match = LINK_RE.exec(lineText)) !== null) {
+    const start = lineFrom + match.index;
+    const labelStart = start + 1;
+    const labelEnd = labelStart + match[1]!.length;
+    const end = start + match[0].length;
+    const active = touchesSelection(selectionRanges, start, end);
+    specs.push(
+      { from: start, to: labelStart, deco: markerDeco(active) },
+      { from: labelStart, to: labelEnd, deco: linkLabelDeco },
       { from: labelEnd, to: end, deco: markerDeco(active) },
     );
   }
