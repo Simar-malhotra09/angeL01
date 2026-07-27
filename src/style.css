@@ -102,6 +102,7 @@ body {
   background: var(--bg);
   border: 1px solid var(--faint);
   border-radius: 4px;
+  overflow: hidden;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 12px;
 }
@@ -150,6 +151,18 @@ body {
 
 .cm-md-heading-3 {
   font-size: 1.15em;
+}
+
+.cm-md-image-label {
+  color: var(--accent);
+  border-bottom: 1px dotted var(--accent);
+}
+
+.cm-image-tooltip {
+  display: block;
+  max-width: 320px;
+  max-height: 320px;
+  object-fit: contain;
 }
 
 #toc {

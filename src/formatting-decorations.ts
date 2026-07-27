@@ -12,12 +12,14 @@ const markDeco = Decoration.mark({ class: "cm-md-mark" });
 const hiddenDeco = Decoration.replace({});
 const boldTextDeco = Decoration.mark({ class: "cm-md-bold" });
 const italicTextDeco = Decoration.mark({ class: "cm-md-italic" });
+const imageLabelDeco = Decoration.mark({ class: "cm-md-image-label" });
 const headingLineDeco = [1, 2, 3].map((level) =>
   Decoration.line({ class: `cm-md-heading-${level}` }),
 );
 
 const BOLD_RE = /\*\*([^\n*]+)\*\*/g;
 const ITALIC_RE = /(?<!\*)\*([^\n*]+)\*(?!\*)/g;
+const IMAGE_RE = /!\[([^\]]*)\]\(image:[a-zA-Z0-9-]+\)/g;
 
 interface DecoSpec {
   from: number;
@@ -78,6 +80,20 @@ function collectLineSpecs(
       { from: start, to: innerStart, deco: markerDeco(active) },
       { from: innerStart, to: innerEnd, deco: italicTextDeco },
       { from: innerEnd, to: end, deco: markerDeco(active) },
+    );
+  }
+
+  IMAGE_RE.lastIndex = 0;
+  while ((match = IMAGE_RE.exec(lineText)) !== null) {
+    const start = lineFrom + match.index;
+    const labelStart = start + 2;
+    const labelEnd = labelStart + match[1]!.length;
+    const end = start + match[0].length;
+    const active = touchesSelection(selectionRanges, start, end);
+    specs.push(
+      { from: start, to: labelStart, deco: markerDeco(active) },
+      { from: labelStart, to: labelEnd, deco: imageLabelDeco },
+      { from: labelEnd, to: end, deco: markerDeco(active) },
     );
   }
 
