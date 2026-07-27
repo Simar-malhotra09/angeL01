@@ -80,8 +80,14 @@ body {
 }
 
 .cm-cursor {
-  border-left-width: 2px !important;
-  border-color: var(--accent) !important;
+  border-left-width: 2px;
+  border-color: var(--accent);
+}
+
+.cm-fat-cursor {
+  background-color: var(--accent);
+  border: none;
+  opacity: 0.6;
 }
 
 .cm-activeLine {
