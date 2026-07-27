@@ -1,4 +1,4 @@
-const DB_NAME = "titty-images";
+const DB_NAME = "angel01-images";
 const STORE_NAME = "images";
 const DB_VERSION = 1;
 

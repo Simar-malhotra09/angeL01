@@ -1,4 +1,4 @@
-const STORAGE_KEY = "titty-draft";
+const STORAGE_KEY = "angel01";
 
 export function loadDraft(): string {
   return localStorage.getItem(STORAGE_KEY) ?? "";
