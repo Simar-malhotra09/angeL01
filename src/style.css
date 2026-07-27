@@ -97,3 +97,22 @@ body {
 ::placeholder {
   color: var(--faint);
 }
+
+.cm-tooltip {
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  border-radius: 4px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+}
+
+.cm-url-tooltip {
+  display: block;
+  padding: 4px 8px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.cm-url-tooltip:hover {
+  text-decoration: underline;
+}

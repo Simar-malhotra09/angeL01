@@ -12,6 +12,7 @@ import { search, searchKeymap } from "@codemirror/search";
 import { saveDraft } from "./storage";
 import { vim } from "@replit/codemirror-vim";
 import { resolveTypographyInsert } from "./smart-typography";
+import { urlHoverTooltip } from "./url-tooltip";
 
 export interface EditorCallbacks {
   onChange: (text: string) => void;
@@ -59,6 +60,7 @@ export function createEditor(
     highlightActiveLine(),
     scrollPastEnd(),
     search(),
+    urlHoverTooltip,
     smartTypographyHandler,
     EditorView.theme({ "&": { backgroundColor: "transparent" } }),
   ];
