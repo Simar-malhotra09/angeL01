@@ -116,3 +116,8 @@ body {
 .cm-url-tooltip:hover {
   text-decoration: underline;
 }
+
+.cm-panels {
+  background: var(--bg);
+  color: var(--fg);
+}
