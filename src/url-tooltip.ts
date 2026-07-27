@@ -1,5 +1,6 @@
 import { hoverTooltip, type Tooltip } from "@codemirror/view";
 import type { EditorView } from "@codemirror/view";
+import { getCoordsAtEnd } from "./tooltip-anchor";
 
 const URL_PATTERN = /https?:\/\/[^\s]+/g;
 
@@ -17,14 +18,14 @@ function findUrlAt(lineText: string, lineFrom: number, pos: number): Tooltip | n
       pos: start,
       end,
       above: true,
-      create: () => {
+      create: (view) => {
         const dom = document.createElement("a");
         dom.className = "cm-url-tooltip";
         dom.href = url;
         dom.target = "_blank";
         dom.rel = "noopener noreferrer";
         dom.textContent = `Open ${url}`;
-        return { dom };
+        return { dom, getCoords: (p) => getCoordsAtEnd(view, end, p) };
       },
     };
   }

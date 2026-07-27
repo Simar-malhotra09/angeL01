@@ -1,6 +1,7 @@
 import { hoverTooltip, type Tooltip } from "@codemirror/view";
 import type { EditorView } from "@codemirror/view";
 import { getImage } from "./image-store";
+import { getCoordsAtEnd } from "./tooltip-anchor";
 
 const IMAGE_REF_RE = /!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)/g;
 
@@ -40,13 +41,14 @@ export const imageHoverTooltip = hoverTooltip(
       pos: ref.from,
       end: ref.to,
       above: true,
-      create: () => {
+      create: (tooltipView) => {
         const objectUrl = URL.createObjectURL(blob);
         const dom = document.createElement("img");
         dom.className = "cm-image-tooltip";
         dom.src = objectUrl;
         return {
           dom,
+          getCoords: (p) => getCoordsAtEnd(tooltipView, ref.to, p),
           destroy: () => {
             URL.revokeObjectURL(objectUrl);
           },
