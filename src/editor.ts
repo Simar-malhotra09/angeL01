@@ -1,6 +1,7 @@
 import { EditorView, keymap, drawSelection, placeholder } from "@codemirror/view";
 import { EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { search, searchKeymap } from "@codemirror/search";
 import { saveDraft } from "./storage";
 import { vim } from "@replit/codemirror-vim";
 
@@ -25,11 +26,12 @@ export function createEditor(
   const extensions: Extension[] = [
     vim(),
     history(),
-    keymap.of([...defaultKeymap, ...historyKeymap]),
+    keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
     placeholder("Start writing..."),
     EditorView.lineWrapping,
     changeListener,
     drawSelection(),
+    search(),
     EditorView.theme({ "&": { backgroundColor: "transparent" } }),
   ];
 
