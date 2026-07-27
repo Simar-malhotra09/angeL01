@@ -13,6 +13,8 @@ import { saveDraft } from "./storage";
 import { vim } from "@replit/codemirror-vim";
 import { resolveTypographyInsert } from "./smart-typography";
 import { urlHoverTooltip } from "./url-tooltip";
+import { toggleBold, toggleItalic, makeToggleHeading } from "./formatting-commands";
+import { markdownDecorations } from "./formatting-decorations";
 
 export interface EditorCallbacks {
   onChange: (text: string) => void;
@@ -52,6 +54,13 @@ export function createEditor(
   const extensions: Extension[] = [
     vim(),
     history(),
+    keymap.of([
+      { key: "Mod-b", run: toggleBold },
+      { key: "Mod-i", run: toggleItalic },
+      { key: "Mod-Alt-1", run: makeToggleHeading(1) },
+      { key: "Mod-Alt-2", run: makeToggleHeading(2) },
+      { key: "Mod-Alt-3", run: makeToggleHeading(3) },
+    ]),
     keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
     placeholder("Start writing..."),
     EditorView.lineWrapping,
@@ -62,6 +71,7 @@ export function createEditor(
     search(),
     urlHoverTooltip,
     smartTypographyHandler,
+    markdownDecorations,
     EditorView.contentAttributes.of({
       spellcheck: "true",
       autocapitalize: "sentences",

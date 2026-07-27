@@ -1,1 +1,1 @@
-{"root":["./src/editor.ts","./src/main.ts","./src/smart-typography.ts","./src/storage.ts","./src/url-tooltip.ts","./src/word-count.ts"],"version":"5.9.3"}
+{"root":["./src/editor.ts","./src/formatting-commands.ts","./src/formatting-decorations.ts","./src/main.ts","./src/smart-typography.ts","./src/storage.ts","./src/url-tooltip.ts","./src/word-count.ts"],"version":"5.9.3"}

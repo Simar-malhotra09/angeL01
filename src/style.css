@@ -121,3 +121,33 @@ body {
   background: var(--bg);
   color: var(--fg);
 }
+
+.cm-md-mark {
+  color: var(--faint);
+}
+
+.cm-md-bold {
+  font-weight: 700;
+}
+
+.cm-md-italic {
+  font-style: italic;
+}
+
+.cm-md-heading-1,
+.cm-md-heading-2,
+.cm-md-heading-3 {
+  font-weight: 700;
+}
+
+.cm-md-heading-1 {
+  font-size: 1.7em;
+}
+
+.cm-md-heading-2 {
+  font-size: 1.4em;
+}
+
+.cm-md-heading-3 {
+  font-size: 1.15em;
+}
