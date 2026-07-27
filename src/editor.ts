@@ -4,6 +4,7 @@ import {
   drawSelection,
   placeholder,
   highlightActiveLine,
+  scrollPastEnd,
 } from "@codemirror/view";
 import { EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
@@ -38,6 +39,7 @@ export function createEditor(
     changeListener,
     drawSelection(),
     highlightActiveLine(),
+    scrollPastEnd(),
     search(),
     EditorView.theme({ "&": { backgroundColor: "transparent" } }),
   ];
