@@ -1,4 +1,10 @@
-import { EditorView, keymap, drawSelection, placeholder } from "@codemirror/view";
+import {
+  EditorView,
+  keymap,
+  drawSelection,
+  placeholder,
+  highlightActiveLine,
+} from "@codemirror/view";
 import { EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { search, searchKeymap } from "@codemirror/search";
@@ -31,6 +37,7 @@ export function createEditor(
     EditorView.lineWrapping,
     changeListener,
     drawSelection(),
+    highlightActiveLine(),
     search(),
     EditorView.theme({ "&": { backgroundColor: "transparent" } }),
   ];
