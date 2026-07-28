@@ -18,6 +18,7 @@ import { toggleBold, toggleItalic, makeToggleHeading, insertLink } from "./forma
 import { markdownDecorations } from "./formatting-decorations";
 import { imageHoverTooltip } from "./image-tooltip";
 import { insertImageFile } from "./image-insert";
+import { findLinkAt } from "./url-tooltip.ts";
 import { isSupportedImageType, IMAGE_FILE_ACCEPT } from "./image-format";
 
 export interface EditorCallbacks {
@@ -127,6 +128,19 @@ export function createEditor(
         void insertImageFile(view, file, pos ?? view.state.selection.main.head);
         return true;
       },
+      click: (event,view)=>{
+        const pos = view.posAtCoords({ x: event.clientX, y: event.clientY});
+        const line = view.state.doc.lineAt(pos);
+        const link = findLinkAt(line.text, line.from, pos);
+        if (link === null) {
+          return false;
+        }
+        event.preventDefault();
+        window.open(link.url, "_blank", "noopener,noreferrer");
+        return true;
+
+
+      }
     }),
     EditorView.contentAttributes.of({
       spellcheck: "true",

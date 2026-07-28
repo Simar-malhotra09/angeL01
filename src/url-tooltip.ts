@@ -11,7 +11,7 @@ interface LinkMatch {
   url: string;
 }
 
-function findLinkAt(lineText: string, lineFrom: number, pos: number): LinkMatch | null {
+export function findLinkAt(lineText: string, lineFrom: number, pos: number): LinkMatch | null {
   LINK_RE.lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = LINK_RE.exec(lineText)) !== null) {
