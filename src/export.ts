@@ -1,7 +1,6 @@
 import type { EditorView } from "@codemirror/view";
 import { getImage } from "./image-store";
 import { renderMarkdownToHtml, escapeHtml, slugify, type TocHeading } from "./markdown-to-html";
-import { parseHeading } from "./headings";
 
 const IMAGE_REF_RE = /!\[[^\]]*\]\(image:([a-zA-Z0-9-]+)\)/g;
 
@@ -140,16 +139,6 @@ async function resolveImageDataUrls(doc: string): Promise<Map<string, string>> {
   return dataUrls;
 }
 
-function deriveTitle(doc: string): string {
-  for (const lineText of doc.split("\n")) {
-    const heading = parseHeading(lineText);
-    if (heading !== null && heading.text.length > 0) {
-      return heading.text;
-    }
-  }
-  return "Untitled";
-}
-
 function renderToc(headings: readonly TocHeading[]): string {
   if (headings.length === 0) {
     return "";
@@ -192,11 +181,10 @@ function downloadHtmlFile(filename: string, html: string): void {
   URL.revokeObjectURL(url);
 }
 
-export async function exportDocumentAsHtml(view: EditorView): Promise<void> {
+export async function exportDocumentAsHtml(view: EditorView, title: string): Promise<void> {
   const doc = view.state.doc.toString();
   const imageDataUrls = await resolveImageDataUrls(doc);
   const { html: bodyHtml, headings } = renderMarkdownToHtml(doc, (id) => imageDataUrls.get(id) ?? null);
-  const title = deriveTitle(doc);
   const filename = `${slugify(title)}.html`;
   downloadHtmlFile(filename, buildHtmlDocument(title, bodyHtml, renderToc(headings)));
 }

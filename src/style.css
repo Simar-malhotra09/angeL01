@@ -73,6 +73,22 @@ body {
   pointer-events: none;
 }
 
+#doc-title {
+  pointer-events: auto;
+  width: 220px;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
+#doc-title:focus {
+  outline: none;
+  color: var(--fg);
+}
+
 #editor-wrap {
   flex: 1;
   display: flex;
