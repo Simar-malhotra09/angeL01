@@ -13,13 +13,13 @@ import { search, searchKeymap } from "@codemirror/search";
 import { saveDraft } from "./storage";
 import { vim } from "@replit/codemirror-vim";
 import { resolveTypographyInsert } from "./smart-typography";
-import { urlHoverTooltip } from "./url-tooltip";
-import { toggleBold, toggleItalic, makeToggleHeading, insertLink } from "./formatting-commands";
+import { urlHoverTooltip, findLinkAt } from "./url-tooltip";
 import { markdownDecorations } from "./formatting-decorations";
 import { imageHoverTooltip } from "./image-tooltip";
 import { insertImageFile } from "./image-insert";
-import { findLinkAt } from "./url-tooltip.ts";
 import { isSupportedImageType, IMAGE_FILE_ACCEPT } from "./image-format";
+import { createPaletteCommands } from "./commands";
+import { createCommandPalette, type CommandPalette } from "./command-palette";
 
 export interface EditorCallbacks {
   onChange: (text: string) => void;
@@ -44,6 +44,9 @@ export function createEditor(
       void insertImageFile(view, file, view.state.selection.main.head);
     }
   });
+
+  const paletteCommands = createPaletteCommands(fileInput);
+  let palette: CommandPalette | null = null;
 
   const changeListener = EditorView.updateListener.of((update) => {
     if (update.docChanged) {
@@ -77,16 +80,11 @@ export function createEditor(
     vim(),
     history(),
     keymap.of([
-      { key: "Mod-b", run: toggleBold },
-      { key: "Mod-i", run: toggleItalic },
-      { key: "Mod-Alt-1", run: makeToggleHeading(1) },
-      { key: "Mod-Alt-2", run: makeToggleHeading(2) },
-      { key: "Mod-Alt-3", run: makeToggleHeading(3) },
-      { key: "Mod-Alt-k", run: insertLink },
+      ...paletteCommands.map((command) => ({ key: command.keys, run: command.run })),
       {
-        key: "Mod-Shift-m",
+        key: "Mod-Shift-p",
         run: () => {
-          fileInput.click();
+          palette?.toggle();
           return true;
         },
       },
@@ -128,8 +126,11 @@ export function createEditor(
         void insertImageFile(view, file, pos ?? view.state.selection.main.head);
         return true;
       },
-      click: (event,view)=>{
-        const pos = view.posAtCoords({ x: event.clientX, y: event.clientY});
+      click: (event, view) => {
+        const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+        if (pos === null) {
+          return false;
+        }
         const line = view.state.doc.lineAt(pos);
         const link = findLinkAt(line.text, line.from, pos);
         if (link === null) {
@@ -138,8 +139,6 @@ export function createEditor(
         event.preventDefault();
         window.open(link.url, "_blank", "noopener,noreferrer");
         return true;
-
-
       }
     }),
     EditorView.contentAttributes.of({
@@ -153,5 +152,6 @@ export function createEditor(
   const state = EditorState.create({ doc: initialDoc, extensions });
 
   const view = new EditorView({ state, parent });
+  palette = createCommandPalette(view, paletteCommands);
   return view;
 }

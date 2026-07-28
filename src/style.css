@@ -224,3 +224,66 @@ body {
 .toc-active {
   color: var(--accent);
 }
+
+.command-palette-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14vh;
+  background: rgba(43, 40, 34, 0.15);
+  z-index: 10;
+}
+
+.command-palette-overlay.is-open {
+  display: flex;
+}
+
+.command-palette {
+  width: 100%;
+  max-width: 420px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(43, 40, 34, 0.12);
+}
+
+.command-palette-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  margin: 0;
+  border: none;
+  border-bottom: 1px solid rgba(163, 159, 146, 0.2);
+  background: none;
+  padding: 8px 12px;
+  font: inherit;
+  text-align: left;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.command-palette-row:last-child {
+  border-bottom: none;
+}
+
+.command-palette-row:hover {
+  background: rgba(181, 98, 74, 0.08);
+}
+
+.command-palette-label {
+  font-size: 14px;
+}
+
+.command-palette-keys {
+  flex-shrink: 0;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+}
