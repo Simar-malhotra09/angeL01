@@ -1,6 +1,6 @@
 import type { EditorView } from "@codemirror/view";
 import { getImage } from "./image-store";
-import { renderMarkdownToHtml, escapeHtml } from "./markdown-to-html";
+import { renderMarkdownToHtml, escapeHtml, slugify, type TocHeading } from "./markdown-to-html";
 import { parseHeading } from "./headings";
 
 const IMAGE_REF_RE = /!\[[^\]]*\]\(image:([a-zA-Z0-9-]+)\)/g;
@@ -29,8 +29,78 @@ h1 { font-size: 1.7em; }
 h2 { font-size: 1.4em; }
 h3 { font-size: 1.15em; }
 p { margin: 0; }
-a { color: #b5624a; }
-img { max-width: 100%; display: block; margin: 0.5em 0; }
+a { color: #b5624a; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.x-link, .x-image {
+  position: relative;
+}
+.x-link-tooltip, .x-image-preview {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 4px;
+  z-index: 5;
+}
+.x-link:hover .x-link-tooltip,
+.x-image:hover .x-image-preview {
+  display: block;
+}
+.x-link-tooltip {
+  padding: 4px 8px;
+  white-space: nowrap;
+  background: #faf8f4;
+  border: 1px solid #a39f92;
+  border-radius: 4px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  color: #b5624a;
+}
+.x-image-label {
+  color: #b5624a;
+  border-bottom: 1px dotted #b5624a;
+}
+.x-image-preview img {
+  display: block;
+  max-width: 320px;
+  max-height: 320px;
+  object-fit: contain;
+  background: #faf8f4;
+  border: 1px solid #a39f92;
+  border-radius: 4px;
+}
+
+nav.x-toc {
+  display: none;
+  position: fixed;
+  top: 14vh;
+  left: 40px;
+  width: 180px;
+  max-height: 70vh;
+  overflow-y: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+nav.x-toc a {
+  display: block;
+  padding: 3px 0;
+  color: #a39f92;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+nav.x-toc a:hover {
+  color: #2b2822;
+  text-decoration: none;
+}
+nav.x-toc a.x-toc-2 { padding-left: 12px; }
+nav.x-toc a.x-toc-3 { padding-left: 24px; }
+
+@media (min-width: 1100px) {
+  nav.x-toc { display: block; }
+}
 `;
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -80,15 +150,20 @@ function deriveTitle(doc: string): string {
   return "Untitled";
 }
 
-function deriveFilename(title: string): string {
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return `${slug.length > 0 ? slug : "untitled"}.html`;
+function renderToc(headings: readonly TocHeading[]): string {
+  if (headings.length === 0) {
+    return "";
+  }
+  const links = headings
+    .map(
+      (heading) =>
+        `<a href="#${heading.slug}" class="x-toc-${heading.level}">${escapeHtml(heading.text)}</a>`,
+    )
+    .join("\n");
+  return `<nav class="x-toc">\n${links}\n</nav>`;
 }
 
-function buildHtmlDocument(title: string, bodyHtml: string): string {
+function buildHtmlDocument(title: string, bodyHtml: string, tocHtml: string): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -98,6 +173,7 @@ function buildHtmlDocument(title: string, bodyHtml: string): string {
 <style>${PAGE_STYLES}</style>
 </head>
 <body>
+${tocHtml}
 <main>
 ${bodyHtml}
 </main>
@@ -119,7 +195,8 @@ function downloadHtmlFile(filename: string, html: string): void {
 export async function exportDocumentAsHtml(view: EditorView): Promise<void> {
   const doc = view.state.doc.toString();
   const imageDataUrls = await resolveImageDataUrls(doc);
-  const bodyHtml = renderMarkdownToHtml(doc, (id) => imageDataUrls.get(id) ?? null);
+  const { html: bodyHtml, headings } = renderMarkdownToHtml(doc, (id) => imageDataUrls.get(id) ?? null);
   const title = deriveTitle(doc);
-  downloadHtmlFile(deriveFilename(title), buildHtmlDocument(title, bodyHtml));
+  const filename = `${slugify(title)}.html`;
+  downloadHtmlFile(filename, buildHtmlDocument(title, bodyHtml, renderToc(headings)));
 }

@@ -3,6 +3,17 @@ import { LINK_RE } from "./links";
 
 export type ImageResolver = (imageId: string) => string | null;
 
+export interface TocHeading {
+  level: 1 | 2 | 3;
+  text: string;
+  slug: string;
+}
+
+export interface RenderedMarkdown {
+  html: string;
+  headings: TocHeading[];
+}
+
 const BOLD_RE = /\*\*([^\n*]+)\*\*/g;
 const ITALIC_RE = /(?<!\*)\*([^\n*]+)\*(?!\*)/g;
 const IMAGE_RE = /!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)/g;
@@ -22,20 +33,46 @@ export function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
+export function slugify(text: string): string {
+  const slug = text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug.length > 0 ? slug : "section";
+}
+
+function renderLinkSpan(label: string, url: string): string {
+  return (
+    `<span class="x-link">` +
+    `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>` +
+    `<span class="x-link-tooltip">Open ${escapeHtml(url)}</span>` +
+    `</span>`
+  );
+}
+
+function renderImageSpan(label: string, src: string | null): string {
+  if (src === null) {
+    return `<span class="x-image-label">${escapeHtml(label)}</span>`;
+  }
+  return (
+    `<span class="x-image">` +
+    `<span class="x-image-label">${escapeHtml(label)}</span>` +
+    `<span class="x-image-preview"><img src="${escapeHtml(src)}" alt="${escapeHtml(label)}"></span>` +
+    `</span>`
+  );
+}
+
 function collectInlineSpans(lineText: string, resolveImage: ImageResolver): InlineSpan[] {
   const candidates: InlineSpan[] = [];
   let match: RegExpExecArray | null;
 
   IMAGE_RE.lastIndex = 0;
   while ((match = IMAGE_RE.exec(lineText)) !== null) {
-    const src = resolveImage(match[2]!);
-    if (src !== null) {
-      candidates.push({
-        from: match.index,
-        to: match.index + match[0].length,
-        html: `<img src="${escapeHtml(src)}" alt="${escapeHtml(match[1]!)}">`,
-      });
-    }
+    candidates.push({
+      from: match.index,
+      to: match.index + match[0].length,
+      html: renderImageSpan(match[1]!, resolveImage(match[2]!)),
+    });
   }
 
   LINK_RE.lastIndex = 0;
@@ -43,7 +80,7 @@ function collectInlineSpans(lineText: string, resolveImage: ImageResolver): Inli
     candidates.push({
       from: match.index,
       to: match.index + match[0].length,
-      html: `<a href="${escapeHtml(match[2]!)}" target="_blank" rel="noopener noreferrer">${escapeHtml(match[1]!)}</a>`,
+      html: renderLinkSpan(match[1]!, match[2]!),
     });
   }
 
@@ -86,7 +123,7 @@ function renderPlainText(text: string): string {
   let match: RegExpExecArray | null;
   while ((match = BARE_URL_RE.exec(text)) !== null) {
     result += escapeHtml(text.slice(cursor, match.index));
-    result += `<a href="${escapeHtml(match[0])}" target="_blank" rel="noopener noreferrer">${escapeHtml(match[0])}</a>`;
+    result += renderLinkSpan(match[0], match[0]);
     cursor = match.index + match[0].length;
   }
   result += escapeHtml(text.slice(cursor));
@@ -107,13 +144,23 @@ function renderLineInline(lineText: string, resolveImage: ImageResolver): string
   return html;
 }
 
-export function renderMarkdownToHtml(doc: string, resolveImage: ImageResolver): string {
+export function renderMarkdownToHtml(doc: string, resolveImage: ImageResolver): RenderedMarkdown {
   const blocks: string[] = [];
+  const headings: TocHeading[] = [];
+  const slugCounts = new Map<string, number>();
 
   for (const lineText of doc.split("\n")) {
     const heading = parseHeading(lineText);
     if (heading !== null) {
-      blocks.push(`<h${heading.level}>${escapeHtml(heading.text)}</h${heading.level}>`);
+      const baseSlug = slugify(heading.text);
+      const seen = slugCounts.get(baseSlug) ?? 0;
+      slugCounts.set(baseSlug, seen + 1);
+      const slug = seen === 0 ? baseSlug : `${baseSlug}-${seen + 1}`;
+
+      headings.push({ level: heading.level, text: heading.text, slug });
+      blocks.push(
+        `<h${heading.level} id="${slug}">${escapeHtml(heading.text)}</h${heading.level}>`,
+      );
       continue;
     }
 
@@ -125,5 +172,5 @@ export function renderMarkdownToHtml(doc: string, resolveImage: ImageResolver): 
     blocks.push(`<p>${renderLineInline(lineText, resolveImage)}</p>`);
   }
 
-  return blocks.join("\n");
+  return { html: blocks.join("\n"), headings };
 }
