@@ -91,7 +91,7 @@ export function createEditor(
       },
     ]),
     keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
-    placeholder("Start writing..."),
+    placeholder("You mustn't run away..."),
     EditorView.lineWrapping,
     changeListener,
     drawSelection(),
