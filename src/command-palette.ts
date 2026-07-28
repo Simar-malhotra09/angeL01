@@ -32,13 +32,26 @@ export interface CommandPalette {
 
 export function createCommandPalette(view: EditorView, commands: PaletteCommand[]): CommandPalette {
   let isOpen = false;
+  let selectedIndex = 0;
+  let pendingG = false;
 
   const overlay = document.createElement("div");
   overlay.className = "command-palette-overlay";
 
   const panel = document.createElement("div");
   panel.className = "command-palette";
+  panel.tabIndex = -1;
   overlay.appendChild(panel);
+
+  const rows: HTMLButtonElement[] = [];
+
+  function selectIndex(index: number): void {
+    const clamped = Math.max(0, Math.min(commands.length - 1, index));
+    rows[selectedIndex]?.classList.remove("is-selected");
+    selectedIndex = clamped;
+    rows[selectedIndex]?.classList.add("is-selected");
+    rows[selectedIndex]?.scrollIntoView({ block: "nearest" });
+  }
 
   function hide(): void {
     isOpen = false;
@@ -47,7 +60,12 @@ export function createCommandPalette(view: EditorView, commands: PaletteCommand[
 
   function show(): void {
     isOpen = true;
+    pendingG = false;
     overlay.classList.add("is-open");
+    rows.forEach((row) => row.classList.remove("is-selected"));
+    selectedIndex = 0;
+    rows[0]?.classList.add("is-selected");
+    panel.focus();
   }
 
   function activate(command: PaletteCommand): void {
@@ -56,7 +74,7 @@ export function createCommandPalette(view: EditorView, commands: PaletteCommand[
     command.run(view);
   }
 
-  for (const command of commands) {
+  commands.forEach((command, index) => {
     const row = document.createElement("button");
     row.type = "button";
     row.className = "command-palette-row";
@@ -71,8 +89,10 @@ export function createCommandPalette(view: EditorView, commands: PaletteCommand[
 
     row.append(label, keys);
     row.addEventListener("click", () => activate(command));
+    row.addEventListener("mouseenter", () => selectIndex(index));
     panel.appendChild(row);
-  }
+    rows.push(row);
+  });
 
   overlay.addEventListener("mousedown", (event) => {
     if (event.target === overlay) {
@@ -81,10 +101,47 @@ export function createCommandPalette(view: EditorView, commands: PaletteCommand[
     }
   });
 
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && isOpen) {
-      hide();
-      view.focus();
+  panel.addEventListener("keydown", (event) => {
+    if (event.key === "g") {
+      event.preventDefault();
+      if (pendingG) {
+        pendingG = false;
+        selectIndex(0);
+      } else {
+        pendingG = true;
+      }
+      return;
+    }
+    pendingG = false;
+
+    switch (event.key) {
+      case "j":
+        event.preventDefault();
+        selectIndex(selectedIndex + 1);
+        break;
+      case "k":
+        event.preventDefault();
+        selectIndex(selectedIndex - 1);
+        break;
+      case "G":
+        event.preventDefault();
+        selectIndex(commands.length - 1);
+        break;
+      case "Enter": {
+        event.preventDefault();
+        const command = commands[selectedIndex];
+        if (command) {
+          activate(command);
+        }
+        break;
+      }
+      case "Escape":
+        event.preventDefault();
+        hide();
+        view.focus();
+        break;
+      default:
+        break;
     }
   });
 
