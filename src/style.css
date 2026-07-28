@@ -249,6 +249,7 @@ body {
   border: 1px solid var(--faint);
   border-radius: 4px;
   box-shadow: 0 8px 24px rgba(43, 40, 34, 0.12);
+  outline: none;
 }
 
 .command-palette-row {
@@ -272,7 +273,8 @@ body {
   border-bottom: none;
 }
 
-.command-palette-row:hover {
+.command-palette-row:hover,
+.command-palette-row.is-selected {
   background: rgba(181, 98, 74, 0.08);
 }
 
