@@ -1,4 +1,4 @@
-This is a word processor which is *just* that. 
+# This is a word processor which is *just* that. 
 
 To start: 
 ```
