@@ -1,11 +1,11 @@
 import "./style.css";
 import { createEditor } from "./editor";
-import { loadDraft, loadTitle, saveTitle } from "./storage";
+import { loadDraft, loadTitle, saveTitle, getText, getDocID} from "./storage";
 import { countWords, formatWordCount } from "./word-count";
 import { createToc, type Toc } from "./toc";
 import { exportDocumentAsHtml } from "./export";
 
-function main(): void {
+async function main(): Promise<void> {
   const shell = document.getElementById("editor-shell");
   const wordCountEl = document.getElementById("word-count");
   const tocEl = document.getElementById("toc");
@@ -19,6 +19,11 @@ function main(): void {
   }
 
   const initialDoc = loadDraft();
+  // const id = getDocID();
+  // console.log("doc id:", id);
+  // const doc = await getText(id);
+  // const initialDoc = doc?.text ?? "Empty!";
+
   wordCountEl.textContent = formatWordCount(countWords(initialDoc));
 
   const initialTitle = loadTitle();
@@ -55,4 +60,4 @@ function main(): void {
   view.focus();
 }
 
-main();
+void main();
