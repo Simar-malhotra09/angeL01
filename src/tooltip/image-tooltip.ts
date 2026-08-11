@@ -1,6 +1,6 @@
 import { hoverTooltip, type Tooltip } from "@codemirror/view";
 import type { EditorView } from "@codemirror/view";
-import { getImage } from "./image-store";
+import { getImage } from "../image/image-store";
 import { getCoordsAtEnd } from "./tooltip-anchor";
 
 const IMAGE_REF_RE = /!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)/g;

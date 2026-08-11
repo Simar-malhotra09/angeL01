@@ -1,6 +1,6 @@
 import { EditorSelection } from "@codemirror/state";
 import type { Command } from "@codemirror/view";
-import { parseHeading } from "./headings";
+import { parseHeading } from "../markdown/headings";
 
 const BOLD_MARK = "**";
 const ITALIC_MARK = "*";

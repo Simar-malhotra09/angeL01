@@ -1,6 +1,6 @@
 import { EditorSelection } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
-import { parseHeading } from "./headings";
+import { parseHeading } from "./markdown/headings";
 
 interface TocEntry {
   level: 1 | 2 | 3;

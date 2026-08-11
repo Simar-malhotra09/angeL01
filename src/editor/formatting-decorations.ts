@@ -6,8 +6,8 @@ import {
   ViewPlugin,
   type ViewUpdate,
 } from "@codemirror/view";
-import { parseHeading } from "./headings";
-import { LINK_RE } from "./links";
+import { parseHeading } from "../markdown/headings";
+import { LINK_RE } from "../markdown/links";
 
 const markDeco = Decoration.mark({ class: "cm-md-mark" });
 const hiddenDeco = Decoration.replace({});

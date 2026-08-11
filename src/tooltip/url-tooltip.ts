@@ -1,7 +1,7 @@
 import { hoverTooltip, type Tooltip } from "@codemirror/view";
 import type { EditorView } from "@codemirror/view";
 import { getCoordsAtEnd } from "./tooltip-anchor";
-import { LINK_RE } from "./links";
+import { LINK_RE } from "../markdown/links";
 
 const BARE_URL_RE = /https?:\/\/[^\s]+/g;
 

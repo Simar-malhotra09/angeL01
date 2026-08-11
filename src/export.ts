@@ -1,6 +1,6 @@
 import type { EditorView } from "@codemirror/view";
-import { getImage } from "./image-store";
-import { renderMarkdownToHtml, escapeHtml, slugify, type TocHeading } from "./markdown-to-html";
+import { getImage } from "./image/image-store";
+import { renderMarkdownToHtml, escapeHtml, slugify, type TocHeading } from "./markdown/markdown-to-html";
 
 const IMAGE_REF_RE = /!\[[^\]]*\]\(image:([a-zA-Z0-9-]+)\)/g;
 

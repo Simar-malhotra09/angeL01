@@ -1,5 +1,5 @@
 import "./style.css";
-import { createEditor } from "./editor";
+import { createEditor } from "./editor/editor";
 import { loadDraft, loadTitle, saveTitle, getText, getDocID} from "./storage";
 import { countWords, formatWordCount } from "./word-count";
 import { createToc, type Toc } from "./toc";

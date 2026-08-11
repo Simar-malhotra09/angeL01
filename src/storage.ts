@@ -1,4 +1,4 @@
-import {TocHeading} from "./markdown-to-html.ts"; 
+import {TocHeading} from "./markdown/markdown-to-html.ts";
 
 const STORAGE_KEY = "angel01";
 const TITLE_KEY = "angel01-title";

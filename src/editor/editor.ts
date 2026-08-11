@@ -10,15 +10,15 @@ import {
 import { EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { search, searchKeymap } from "@codemirror/search";
-import { saveDraft, putText} from "./storage";
+import { saveDraft, putText} from "../storage";
 import { Vim, vim, getCM} from "@replit/codemirror-vim";
-import { resolveTypographyInsert } from "./smart-typography";
-import { urlHoverTooltip, findLinkAt } from "./url-tooltip";
+import { resolveTypographyInsert } from "../markdown/smart-typography";
+import { urlHoverTooltip, findLinkAt } from "../tooltip/url-tooltip";
 import { markdownDecorations } from "./formatting-decorations";
-import { imageHoverTooltip } from "./image-tooltip";
-import { insertImageFile } from "./image-insert";
-import { generateImageId} from "./image-format.ts";
-import { isSupportedImageType, IMAGE_FILE_ACCEPT } from "./image-format";
+import { imageHoverTooltip } from "../tooltip/image-tooltip";
+import { insertImageFile } from "../image/image-insert";
+import { generateImageId} from "../image/image-format.ts";
+import { isSupportedImageType, IMAGE_FILE_ACCEPT } from "../image/image-format";
 import { createPaletteCommands } from "./commands";
 import { createCommandPalette, type CommandPalette } from "./command-palette";
 
