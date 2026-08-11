@@ -11,12 +11,13 @@ const DB_VERSION = 1;
 const DOC_ID_KEY = "doc-id";
 
 export function getDocID(): string {
-  let id = localStorage.getItem(DOC_ID_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(DOC_ID_KEY, id);
-  }
-  return id;
+  return DOC_ID_KEY;
+  // let id = localStorage.getItem(DOC_ID_KEY);
+  // if (!id) {
+  //   id = crypto.randomUUID();
+  //   localStorage.setItem(DOC_ID_KEY, id);
+  // }
+  // return id;
 }
 
 export interface Doc {

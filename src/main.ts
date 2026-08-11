@@ -18,11 +18,11 @@ async function main(): Promise<void> {
     );
   }
 
-  const initialDoc = loadDraft();
-  // const id = getDocID();
-  // console.log("doc id:", id);
-  // const doc = await getText(id);
-  // const initialDoc = doc?.text ?? "Empty!";
+  // const initialDoc = loadDraft();
+  const id = getDocID();
+  console.log("doc id:", id);
+  const doc = await getText(id);
+  const initialDoc = doc?.content ?? "Empty!";
 
   wordCountEl.textContent = formatWordCount(countWords(initialDoc));
 

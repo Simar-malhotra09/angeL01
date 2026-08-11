@@ -10,7 +10,7 @@ import {
 import { EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { search, searchKeymap } from "@codemirror/search";
-import { saveDraft, putText} from "../storage";
+import { saveDraft, putText, } from "../storage";
 import { Vim, vim, getCM} from "@replit/codemirror-vim";
 import { resolveTypographyInsert } from "../markdown/smart-typography";
 import { urlHoverTooltip, findLinkAt } from "../tooltip/url-tooltip";
@@ -18,6 +18,7 @@ import { markdownDecorations } from "./formatting-decorations";
 import { imageHoverTooltip } from "../tooltip/image-tooltip";
 import { insertImageFile } from "../image/image-insert";
 import { generateImageId} from "../image/image-format.ts";
+import { getDocID } from "../storage";
 import { isSupportedImageType, IMAGE_FILE_ACCEPT } from "../image/image-format";
 import { createPaletteCommands } from "./commands";
 import { createCommandPalette, type CommandPalette } from "./command-palette";
@@ -33,7 +34,7 @@ export function createEditor(
   callbacks: EditorCallbacks,
 ): EditorView {
 
-  const id = generateImageId();
+  const imageID = generateImageId();
   const fileInput = document.createElement("input");
   fileInput.type = "file";
   fileInput.accept = IMAGE_FILE_ACCEPT;
@@ -80,11 +81,17 @@ export function createEditor(
   });
 
   Vim.defineEx("save", "sa", (cm) => {
-    console.log("[INFO]: Saving to indexedDB!");
+    console.log(`[INFO]: Saving to indexedDB!: ${cm.getValue()}`);
+    const docID = getDocID();
+    const now = Date.now();
 
-    const text = "Getting for indexedDB: " + cm.getValue();
-
-    putText(id, text);
+    putText(docID, {
+      id: docID,
+      title: "",
+      content: cm.getValue(),
+      createdAt: now,
+      updatedAt: now,
+    });
   });
 
   const extensions: Extension[] = [
