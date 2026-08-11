@@ -80,7 +80,7 @@ export function createEditor(
     return true;
   });
 
-  Vim.defineEx("save", "sa", (cm) => {
+  Vim.defineEx("write", "w", (cm) => {
     console.log(`[INFO]: Saving to indexedDB!: ${cm.getValue()}`);
     const docID = getDocID();
     const now = Date.now();
