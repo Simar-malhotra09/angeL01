@@ -1,6 +1,7 @@
 import { EditorSelection } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
 import { parseHeading } from "./markdown/headings";
+import { stripInlineMarkdown } from "./markdown/markdown-to-html";
 
 interface TocEntry {
   level: 1 | 2 | 3;
@@ -14,7 +15,7 @@ function extractHeadings(view: EditorView): TocEntry[] {
     const line = view.state.doc.line(lineNum);
     const heading = parseHeading(line.text);
     if (heading && heading.text.length > 0) {
-      entries.push({ level: heading.level, text: heading.text, from: line.from });
+      entries.push({ level: heading.level, text: stripInlineMarkdown(heading.text), from: line.from });
     }
   }
   return entries;

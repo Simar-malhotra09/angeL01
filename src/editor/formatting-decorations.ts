@@ -43,18 +43,18 @@ function collectLineSpecs(
   lineText: string,
   selectionRanges: readonly SelectionRange[],
 ): DecoSpec[] {
+  const specs: DecoSpec[] = [];
+
   const heading = parseHeading(lineText);
   if (heading) {
     const level = heading.level;
     const markerEnd = lineFrom + level + 1;
     const active = touchesSelection(selectionRanges, lineFrom, lineTo);
-    return [
+    specs.push(
       { from: lineFrom, to: lineFrom, deco: headingLineDeco[level - 1]! },
       { from: lineFrom, to: markerEnd, deco: markerDeco(active) },
-    ];
+    );
   }
-
-  const specs: DecoSpec[] = [];
 
   BOLD_RE.lastIndex = 0;
   let match: RegExpExecArray | null;

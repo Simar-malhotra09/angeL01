@@ -17,6 +17,7 @@ export interface RenderedMarkdown {
 const BOLD_RE = /\*\*([^\n*]+)\*\*/g;
 const ITALIC_RE = /(?<!\*)\*([^\n*]+)\*(?!\*)/g;
 const IMAGE_RE = /!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)/g;
+const BLOCK_IMAGE_RE = /^!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)$/;
 const BARE_URL_RE = /https?:\/\/[^\s]+/g;
 
 interface InlineSpan {
@@ -60,6 +61,21 @@ function renderImageSpan(label: string, src: string | null): string {
     `<span class="x-image-preview"><img src="${escapeHtml(src)}" alt="${escapeHtml(label)}"></span>` +
     `</span>`
   );
+}
+
+function renderBlockImage(label: string, src: string | null): string {
+  if (src === null) {
+    return `<p class="x-image-block-missing">${escapeHtml(label)}</p>`;
+  }
+  return `<p class="x-image-block"><img src="${escapeHtml(src)}" alt="${escapeHtml(label)}"></p>`;
+}
+
+export function stripInlineMarkdown(text: string): string {
+  return text
+    .replace(IMAGE_RE, (_match, label: string) => label)
+    .replace(LINK_RE, (_match, label: string) => label)
+    .replace(BOLD_RE, (_match, inner: string) => inner)
+    .replace(ITALIC_RE, (_match, inner: string) => inner);
 }
 
 function collectInlineSpans(lineText: string, resolveImage: ImageResolver): InlineSpan[] {
@@ -152,15 +168,22 @@ export function renderMarkdownToHtml(doc: string, resolveImage: ImageResolver): 
   for (const lineText of doc.split("\n")) {
     const heading = parseHeading(lineText);
     if (heading !== null) {
-      const baseSlug = slugify(heading.text);
+      const plainText = stripInlineMarkdown(heading.text);
+      const baseSlug = slugify(plainText);
       const seen = slugCounts.get(baseSlug) ?? 0;
       slugCounts.set(baseSlug, seen + 1);
       const slug = seen === 0 ? baseSlug : `${baseSlug}-${seen + 1}`;
 
-      headings.push({ level: heading.level, text: heading.text, slug });
+      headings.push({ level: heading.level, text: plainText, slug });
       blocks.push(
-        `<h${heading.level} id="${slug}">${escapeHtml(heading.text)}</h${heading.level}>`,
+        `<h${heading.level} id="${slug}">${renderLineInline(heading.text, resolveImage)}</h${heading.level}>`,
       );
+      continue;
+    }
+
+    const blockImage = BLOCK_IMAGE_RE.exec(lineText.trim());
+    if (blockImage !== null) {
+      blocks.push(renderBlockImage(blockImage[1]!, resolveImage(blockImage[2]!)));
       continue;
     }
 
