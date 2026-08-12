@@ -1,4 +1,3 @@
-import {TocHeading} from "./markdown/markdown-to-html.ts";
 import { isValidId } from "./id";
 
 const STORAGE_KEY = "angel01";
@@ -52,7 +51,7 @@ function openDb(): Promise<IDBDatabase> {
 
 export async function putText(id: string, doc:Doc):Promise<void> {
   const db = await openDb(); 
-  const res = new Promise((resolve, reject)=> {
+  const res = new Promise<void>((resolve, reject)=> {
     const tx = db.transaction(TEXT_STORE_NAME, "readwrite"); 
     tx.objectStore(TEXT_STORE_NAME).put(doc, id); 
     tx.oncomplete = () => {

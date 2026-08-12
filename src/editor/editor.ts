@@ -18,7 +18,6 @@ import { markdownDecorations } from "./formatting-decorations";
 import { imageHoverTooltip } from "../tooltip/image-tooltip";
 import { imageEmbed } from "./image-embed";
 import { insertImageFile } from "../image/image-insert";
-import { generateImageId} from "../image/image-format.ts";
 import { getDocID } from "../storage";
 import { isSupportedImageType, IMAGE_FILE_ACCEPT } from "../image/image-format";
 import { createPaletteCommands } from "./commands";
@@ -36,7 +35,6 @@ export function createEditor(
   callbacks: EditorCallbacks,
 ): EditorView {
 
-  const imageID = generateImageId();
   const fileInput = document.createElement("input");
   fileInput.type = "file";
   fileInput.accept = IMAGE_FILE_ACCEPT;
