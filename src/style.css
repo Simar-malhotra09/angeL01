@@ -219,6 +219,16 @@ body {
   object-fit: contain;
 }
 
+.cm-image-block {
+  margin: 1.5em 0;
+  text-align: center;
+}
+
+.cm-image-block img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
 #toc {
   display: none;
   position: fixed;

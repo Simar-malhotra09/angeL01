@@ -16,6 +16,7 @@ import { resolveTypographyInsert } from "../markdown/smart-typography";
 import { urlHoverTooltip, findLinkAt } from "../tooltip/url-tooltip";
 import { markdownDecorations } from "./formatting-decorations";
 import { imageHoverTooltip } from "../tooltip/image-tooltip";
+import { imageEmbed } from "./image-embed";
 import { insertImageFile } from "../image/image-insert";
 import { generateImageId} from "../image/image-format.ts";
 import { getDocID } from "../storage";
@@ -159,6 +160,7 @@ export function createEditor(
     imageHoverTooltip,
     smartTypographyHandler,
     markdownDecorations,
+    imageEmbed,
     EditorView.domEventHandlers({
       paste: (event, view) => {
         const file = event.clipboardData?.files[0];

@@ -4,6 +4,7 @@ import { getImage } from "../image/image-store";
 import { getCoordsAtEnd } from "./tooltip-anchor";
 
 const IMAGE_REF_RE = /!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)/g;
+const BLOCK_IMAGE_RE = /^!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)$/;
 
 interface ImageRef {
   from: number;
@@ -27,6 +28,9 @@ function findImageRefAt(lineText: string, lineFrom: number, pos: number): ImageR
 export const imageHoverTooltip = hoverTooltip(
   async (view: EditorView, pos: number): Promise<Tooltip | null> => {
     const line = view.state.doc.lineAt(pos);
+    if (BLOCK_IMAGE_RE.test(line.text.trim())) {
+      return null;
+    }
     const ref = findImageRefAt(line.text, line.from, pos);
     if (ref === null) {
       return null;
