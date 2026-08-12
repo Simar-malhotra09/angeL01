@@ -372,10 +372,18 @@ body {
   left: calc(50% - 15px);
   width: 30px;
   height: auto;
-  pointer-events: none;
+  cursor: grab;
   visibility: hidden;
   animation: doc-sprite-bounce 0.55s ease-in-out infinite;
   transition: top 0.12s ease-out;
+  touch-action: none;
+}
+
+.doc-sprite.is-dragging,
+.doc-sprite.is-floating {
+  cursor: grabbing;
+  transition: none;
+  z-index: 1000;
 }
 
 @keyframes doc-sprite-bounce {
