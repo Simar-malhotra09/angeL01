@@ -20,7 +20,7 @@ async function main(): Promise<void> {
 
   const id = getDocID();
   const doc = await getText(id);
-  const initialDoc = doc?.content ?? "Empty!";
+  const initialDoc = doc?.content ?? "";
 
   wordCountEl.textContent = formatWordCount(countWords(initialDoc));
 
