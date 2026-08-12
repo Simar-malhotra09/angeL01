@@ -1,23 +1,19 @@
 import {TocHeading} from "./markdown/markdown-to-html.ts";
 
 const STORAGE_KEY = "angel01";
-const TITLE_KEY = "angel01-title";
 
 const DB_NAME = "angel01";
 const TEXT_STORE_NAME = "documents";
 const IMG_STORE_NAME = "images";
 const DB_VERSION = 1;
 
-const DOC_ID_KEY = "doc-id";
-
 export function getDocID(): string {
-  return DOC_ID_KEY;
-  // let id = localStorage.getItem(DOC_ID_KEY);
-  // if (!id) {
-  //   id = crypto.randomUUID();
-  //   localStorage.setItem(DOC_ID_KEY, id);
-  // }
-  // return id;
+  const match = window.location.pathname.match(/^\/doc\/([^/]+)$/);
+  const id = match?.[1];
+  if (!id) {
+    throw new Error(`No document ID in URL path: ${window.location.pathname}`);
+  }
+  return id;
 }
 
 export interface Doc {
@@ -27,6 +23,8 @@ export interface Doc {
   createdAt: number;
   updatedAt: number;
 }
+
+export type DocSummary = Pick<Doc, "id" | "title" | "createdAt" | "updatedAt">;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -121,18 +119,18 @@ export async function pushDoc(doc: Doc): Promise<void> {
   }
 }
 
+export async function listDocs(): Promise<DocSummary[]> {
+  const res = await fetch("/api/docs");
+  if (!res.ok) {
+    throw new Error(`Failed to list docs: ${res.status}`);
+  }
+  return (await res.json()) as DocSummary[];
+}
+
 export function loadDraft(): string {
   return localStorage.getItem(STORAGE_KEY) ?? "";
 }
 
 export function saveDraft(text: string): void {
   localStorage.setItem(STORAGE_KEY, text);
-}
-
-export function loadTitle(): string {
-  return localStorage.getItem(TITLE_KEY) ?? "";
-}
-
-export function saveTitle(title: string): void {
-  localStorage.setItem(TITLE_KEY, title);
 }

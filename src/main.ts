@@ -1,6 +1,6 @@
 import "./style.css";
 import { createEditor } from "./editor/editor";
-import { loadDraft, loadTitle, saveTitle, getText, getDocID} from "./storage";
+import { getText, getDocID } from "./storage";
 import { countWords, formatWordCount } from "./word-count";
 import { createToc, type Toc } from "./toc";
 import { exportDocumentAsHtml } from "./export";
@@ -18,20 +18,13 @@ async function main(): Promise<void> {
     );
   }
 
-  // const initialDoc = loadDraft();
   const id = getDocID();
-  console.log("doc id:", id);
   const doc = await getText(id);
   const initialDoc = doc?.content ?? "Empty!";
 
   wordCountEl.textContent = formatWordCount(countWords(initialDoc));
 
-  const initialTitle = loadTitle();
-  docTitleEl.value = initialTitle.length > 0 ? initialTitle : "untitled";
-
-  docTitleEl.addEventListener("input", () => {
-    saveTitle(docTitleEl.value);
-  });
+  docTitleEl.value = doc?.title && doc.title.trim().length > 0 ? doc.title : "untitled";
 
   docTitleEl.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -47,6 +40,10 @@ async function main(): Promise<void> {
     },
     onUpdate: () => {
       toc?.update();
+    },
+    getTitle: () => {
+      const title = docTitleEl.value.trim();
+      return title.length > 0 ? title : "untitled";
     },
   });
 
