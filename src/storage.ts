@@ -1,10 +1,10 @@
 import {TocHeading} from "./markdown/markdown-to-html.ts";
+import { isValidId } from "./id";
 
 const STORAGE_KEY = "angel01";
 
 const DB_NAME = "angel01";
 const TEXT_STORE_NAME = "documents";
-const IMG_STORE_NAME = "images";
 const DB_VERSION = 1;
 
 export function getDocID(): string {
@@ -12,6 +12,9 @@ export function getDocID(): string {
   const id = match?.[1];
   if (!id) {
     throw new Error(`No document ID in URL path: ${window.location.pathname}`);
+  }
+  if (!isValidId(id)) {
+    throw new Error(`Document ID is not a valid UUID: ${id}`);
   }
   return id;
 }
@@ -36,7 +39,6 @@ function openDb(): Promise<IDBDatabase> {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
     request.onupgradeneeded = () => {
       request.result.createObjectStore(TEXT_STORE_NAME);
-      request.result.createObjectStore(IMG_STORE_NAME);
     };
     request.onsuccess = () => {
       resolve(request.result);
@@ -64,50 +66,39 @@ export async function putText(id: string, doc:Doc):Promise<void> {
   return res; 
 }
 
+function getLocalText(id: string): Promise<Doc | null> {
+  return openDb().then(
+    (db) =>
+      new Promise<Doc | null>((resolve, reject) => {
+        const tx = db.transaction(TEXT_STORE_NAME, "readonly");
+        const request = tx.objectStore(TEXT_STORE_NAME).get(id);
+
+        request.onsuccess = () => {
+          resolve((request.result as Doc | undefined) ?? null);
+        };
+
+        request.onerror = () => {
+          reject(request.error);
+        };
+      }),
+  );
+}
+
 export async function getText(id: string): Promise<Doc | null> {
-  const db = await openDb();
+  const local = await getLocalText(id);
+  if (local !== null) {
+    return local;
+  }
 
-  return new Promise<Doc | null>((resolve, reject) => {
-    const tx = db.transaction(TEXT_STORE_NAME, "readonly");
-    const request = tx.objectStore(TEXT_STORE_NAME).get(id);
-
-    request.onsuccess = () => {
-      resolve((request.result as Doc | undefined) ?? null);
-    };
-
-    request.onerror = () => {
-      reject(request.error);
-    };
-  });
+  const res = await fetch(`/api/docs/${id}`);
+  if (!res.ok) {
+    return null;
+  }
+  const doc = (await res.json()) as Doc;
+  await putText(id, doc);
+  return doc;
 }
 
-export async function putImage(id: string, blob: Blob): Promise<void> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(IMG_STORE_NAME, "readwrite");
-    tx.objectStore(IMG_STORE_NAME).put(blob, id);
-    tx.oncomplete = () => {
-      resolve();
-    };
-    tx.onerror = () => {
-      reject(tx.error);
-    };
-  });
-}
-
-export async function getImage(id: string): Promise<Blob | null> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(IMG_STORE_NAME, "readonly");
-    const request = tx.objectStore(IMG_STORE_NAME).get(id);
-    request.onsuccess = () => {
-      resolve((request.result as Blob | undefined) ?? null);
-    };
-    request.onerror = () => {
-      reject(request.error);
-    };
-  });
-}
 export async function pushDoc(doc: Doc): Promise<void> {
   const res = await fetch(`/api/docs/${doc.id}`, {
     method: "PUT",
