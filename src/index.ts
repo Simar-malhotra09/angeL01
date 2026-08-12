@@ -2,6 +2,8 @@ import { Database } from "bun:sqlite";
 import home from "../index.html";
 import editor from "../editor.html";
 import type { Doc, DocSummary } from "./storage";
+import { isSupportedImageType } from "./image/image-format";
+import { isValidId } from "./id";
 
 const db = new Database("angel01.sqlite");
 
@@ -12,6 +14,15 @@ db.exec(`
     content TEXT NOT NULL,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS images (
+    id TEXT PRIMARY KEY,
+    mime_type TEXT NOT NULL,
+    data BLOB NOT NULL,
+    created_at INTEGER NOT NULL
   )
 `);
 
@@ -38,6 +49,21 @@ const upsertDocStmt = db.query<null, [string, string, string, number, number]>(`
     title = excluded.title,
     content = excluded.content,
     updated_at = excluded.updated_at
+`);
+
+interface ImageRow {
+  id: string;
+  mime_type: string;
+  data: Uint8Array;
+}
+
+const getImageStmt = db.query<ImageRow, [string]>(
+  "SELECT id, mime_type, data FROM images WHERE id = ?",
+);
+const insertImageStmt = db.query<null, [string, string, Uint8Array, number]>(`
+  INSERT INTO images (id, mime_type, data, created_at)
+  VALUES (?, ?, ?, ?)
+  ON CONFLICT(id) DO NOTHING
 `);
 
 function rowToDoc(row: DocRow): Doc {
@@ -77,9 +103,33 @@ const server = Bun.serve({
         return Response.json(rowToDoc(row));
       },
       PUT: async (req) => {
+        if (!isValidId(req.params.id)) {
+          return new Response(null, { status: 400 });
+        }
         const body = (await req.json()) as DocWrite;
         const now = Date.now();
         upsertDocStmt.run(req.params.id, body.title, body.content, body.createdAt, now);
+        return Response.json({ ok: true });
+      },
+    },
+    "/api/images/:id": {
+      GET: (req) => {
+        const row = getImageStmt.get(req.params.id);
+        if (row === null) {
+          return new Response(null, { status: 404 });
+        }
+        return new Response(new Blob([new Uint8Array(row.data)], { type: row.mime_type }));
+      },
+      PUT: async (req) => {
+        if (!isValidId(req.params.id)) {
+          return new Response(null, { status: 400 });
+        }
+        const mimeType = req.headers.get("content-type") ?? "";
+        if (!isSupportedImageType(mimeType)) {
+          return new Response(null, { status: 415 });
+        }
+        const data = new Uint8Array(await req.arrayBuffer());
+        insertImageStmt.run(req.params.id, mimeType, data, Date.now());
         return Response.json({ ok: true });
       },
     },
