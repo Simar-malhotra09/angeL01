@@ -110,6 +110,17 @@ export async function getImage(id: string): Promise<Blob | null> {
     };
   });
 }
+export async function pushDoc(doc: Doc): Promise<void> {
+  const res = await fetch(`/api/docs/${doc.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: doc.title, content: doc.content, createdAt: doc.createdAt }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to sync doc ${doc.id}: ${res.status}`);
+  }
+}
+
 export function loadDraft(): string {
   return localStorage.getItem(STORAGE_KEY) ?? "";
 }
