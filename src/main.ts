@@ -5,13 +5,14 @@ import { countWords, formatWordCount } from "./word-count";
 import { createToc, type Toc } from "./toc";
 import { exportDocumentAsHtml } from "./export";
 import { parseHeading } from "./markdown/headings";
+import { stripInlineMarkdown } from "./markdown/markdown-to-html";
 
 function titleFromContent(content: string): string {
   const firstLine = content.split("\n").find((line) => line.trim().length > 0);
   if (!firstLine) {
     return "";
   }
-  return (parseHeading(firstLine)?.text ?? firstLine).trim();
+  return stripInlineMarkdown(parseHeading(firstLine)?.text ?? firstLine).trim();
 }
 
 async function main(): Promise<void> {

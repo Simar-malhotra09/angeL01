@@ -69,6 +69,19 @@ a:hover { text-decoration: underline; }
   border: 1px solid #a39f92;
   border-radius: 4px;
 }
+.x-image-block {
+  margin: 1.5em 0;
+  text-align: center;
+}
+.x-image-block img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+.x-image-block-missing {
+  text-align: center;
+  color: #a39f92;
+  font-style: italic;
+}
 
 nav.x-toc {
   display: none;
