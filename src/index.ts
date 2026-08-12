@@ -50,6 +50,7 @@ const upsertDocStmt = db.query<null, [string, string, string, number, number]>(`
     content = excluded.content,
     updated_at = excluded.updated_at
 `);
+const deleteDocStmt = db.query<null, [string]>("DELETE FROM docs WHERE id = ?");
 
 interface ImageRow {
   id: string;
@@ -109,6 +110,13 @@ const server = Bun.serve({
         const body = (await req.json()) as DocWrite;
         const now = Date.now();
         upsertDocStmt.run(req.params.id, body.title, body.content, body.createdAt, now);
+        return Response.json({ ok: true });
+      },
+      DELETE: (req) => {
+        if (!isValidId(req.params.id)) {
+          return new Response(null, { status: 400 });
+        }
+        deleteDocStmt.run(req.params.id);
         return Response.json({ ok: true });
       },
     },

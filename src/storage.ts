@@ -110,6 +110,25 @@ export async function pushDoc(doc: Doc): Promise<void> {
   }
 }
 
+export async function deleteDoc(id: string): Promise<void> {
+  const res = await fetch(`/api/docs/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    throw new Error(`Failed to delete doc ${id}: ${res.status}`);
+  }
+  const db = await openDb();
+  const result = new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(TEXT_STORE_NAME, "readwrite");
+    tx.objectStore(TEXT_STORE_NAME).delete(id);
+    tx.oncomplete = () => {
+      resolve();
+    };
+    tx.onerror = () => {
+      reject(tx.error);
+    };
+  });
+  return result;
+}
+
 export async function listDocs(): Promise<DocSummary[]> {
   const res = await fetch("/api/docs");
   if (!res.ok) {

@@ -425,3 +425,41 @@ body {
   letter-spacing: 0.04em;
   color: var(--faint);
 }
+
+.doc-context-menu {
+  display: none;
+  position: fixed;
+  min-width: 120px;
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(43, 40, 34, 0.12);
+  z-index: 20;
+  overflow: hidden;
+}
+
+.doc-context-menu.is-open {
+  display: block;
+}
+
+.doc-context-menu-row {
+  display: block;
+  width: 100%;
+  margin: 0;
+  border: none;
+  background: none;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.doc-context-menu-delete {
+  color: var(--accent);
+}
+
+.doc-context-menu-row:hover {
+  background: rgba(181, 98, 74, 0.08);
+}

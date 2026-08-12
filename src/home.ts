@@ -1,5 +1,5 @@
 import "./style.css";
-import { listDocs, type DocSummary } from "./storage";
+import { deleteDoc, listDocs, type DocSummary } from "./storage";
 
 function formatUpdatedAt(ts: number): string {
   return new Date(ts).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -7,6 +7,58 @@ function formatUpdatedAt(ts: number): string {
 
 function openDoc(doc: DocSummary): void {
   window.location.href = `/doc/${doc.id}`;
+}
+
+function createDocContextMenu(onDelete: (doc: DocSummary) => void): {
+  open: (doc: DocSummary, x: number, y: number) => void;
+} {
+  const menu = document.createElement("div");
+  menu.className = "doc-context-menu";
+
+  const deleteRow = document.createElement("button");
+  deleteRow.type = "button";
+  deleteRow.className = "doc-context-menu-row doc-context-menu-delete";
+  deleteRow.textContent = "Delete";
+  menu.appendChild(deleteRow);
+
+  document.body.appendChild(menu);
+
+  let target: DocSummary | null = null;
+
+  function close(): void {
+    menu.classList.remove("is-open");
+    target = null;
+  }
+
+  deleteRow.addEventListener("click", () => {
+    if (target && confirm(`Delete "${target.title.trim() || "untitled"}"? This cannot be undone.`)) {
+      onDelete(target);
+    }
+    close();
+  });
+
+  document.addEventListener("mousedown", (event) => {
+    if (menu.classList.contains("is-open") && !menu.contains(event.target as Node)) {
+      close();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      close();
+    }
+  });
+
+  window.addEventListener("scroll", close, true);
+
+  function open(doc: DocSummary, x: number, y: number): void {
+    target = doc;
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+    menu.classList.add("is-open");
+  }
+
+  return { open };
 }
 
 async function main(): Promise<void> {
@@ -51,7 +103,37 @@ async function main(): Promise<void> {
     }
   }
 
-  docs.forEach((doc, index) => {
+  function removeDoc(doc: DocSummary): void {
+    const index = docs.findIndex((d) => d.id === doc.id);
+    if (index === -1) {
+      return;
+    }
+    docs.splice(index, 1);
+    rows[index]?.remove();
+    rows.splice(index, 1);
+
+    if (rows.length === 0 && listEl) {
+      listEl.replaceChildren();
+      const empty = document.createElement("div");
+      empty.className = "doc-list-empty";
+      empty.textContent = "No documents yet.";
+      listEl.appendChild(empty);
+      listEl.focus();
+      return;
+    }
+
+    selectIndex(Math.min(index, rows.length - 1));
+  }
+
+  const contextMenu = createDocContextMenu((doc) => {
+    deleteDoc(doc.id)
+      .then(() => removeDoc(doc))
+      .catch(() => {
+        alert("Failed to delete document. Please try again.");
+      });
+  });
+
+  docs.forEach((doc) => {
     const row = document.createElement("button");
     row.type = "button";
     row.className = "doc-row";
@@ -66,7 +148,12 @@ async function main(): Promise<void> {
 
     row.append(title, date);
     row.addEventListener("click", () => openDoc(doc));
-    row.addEventListener("mouseenter", () => selectIndex(index));
+    row.addEventListener("mouseenter", () => selectIndex(rows.indexOf(row)));
+    row.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      selectIndex(rows.indexOf(row));
+      contextMenu.open(doc, event.clientX, event.clientY);
+    });
     listEl.appendChild(row);
     rows.push(row);
   });
