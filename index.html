@@ -10,23 +10,13 @@
 
 <div id="logo">angeL01</div>
 
-<button id="export-button" type="button">
-  <img src="./public/export-removebg-preview.png" alt="" />
-  <span>Export as HTML</span>
-</button>
+<button id="new-doc-button" type="button">+ New</button>
 
-<nav id="toc"></nav>
-
-<div id="editor-wrap">
-  <div id="editor-shell"></div>
+<div id="doc-list-wrap">
+  <div id="doc-list" tabindex="0"></div>
 </div>
 
-<div id="statusbar">
-  <input id="doc-title" type="text" value="untitled" autocomplete="off" spellcheck="false" />
-  <span id="word-count">0 words</span>
-</div>
-
-<script type="module" src="/src/main.ts"></script>
+<script type="module" src="/src/home.ts"></script>
 
 </body>
 </html>

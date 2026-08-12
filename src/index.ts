@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
-import index from "../index.html";
-import type { Doc } from "./storage";
+import home from "../index.html";
+import editor from "../editor.html";
+import type { Doc, DocSummary } from "./storage";
 
 const db = new Database("angel01.sqlite");
 
@@ -22,9 +23,14 @@ interface DocRow {
   updated_at: number;
 }
 
+type DocSummaryRow = Omit<DocRow, "content">;
+
 type DocWrite = Pick<Doc, "title" | "content" | "createdAt">;
 
 const getDocStmt = db.query<DocRow, [string]>("SELECT * FROM docs WHERE id = ?");
+const listDocsStmt = db.query<DocSummaryRow, []>(
+  "SELECT id, title, created_at, updated_at FROM docs ORDER BY updated_at DESC",
+);
 const upsertDocStmt = db.query<null, [string, string, string, number, number]>(`
   INSERT INTO docs (id, title, content, created_at, updated_at)
   VALUES (?, ?, ?, ?, ?)
@@ -44,9 +50,24 @@ function rowToDoc(row: DocRow): Doc {
   };
 }
 
+function rowToDocSummary(row: DocSummaryRow): DocSummary {
+  return {
+    id: row.id,
+    title: row.title,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 const server = Bun.serve({
   routes: {
-    "/": index,
+    "/": home,
+    "/doc/:id": editor,
+    "/api/docs": {
+      GET: () => {
+        return Response.json(listDocsStmt.all().map(rowToDocSummary));
+      },
+    },
     "/api/docs/:id": {
       GET: (req) => {
         const row = getDocStmt.get(req.params.id);

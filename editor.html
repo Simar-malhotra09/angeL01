@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>angeL01</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+
+<a id="logo" href="/">angeL01</a>
+
+<button id="export-button" type="button">
+  <img src="./public/export-removebg-preview.png" alt="" />
+  <span>Export as HTML</span>
+</button>
+
+<nav id="toc"></nav>
+
+<div id="editor-wrap">
+  <div id="editor-shell"></div>
+</div>
+
+<div id="statusbar">
+  <input id="doc-title" type="text" value="untitled" autocomplete="off" spellcheck="false" />
+  <span id="word-count">0 words</span>
+</div>
+
+<script type="module" src="/src/main.ts"></script>
+
+</body>
+</html>
