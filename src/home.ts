@@ -12,9 +12,10 @@ function openDoc(doc: DocSummary): void {
 async function main(): Promise<void> {
   const listEl = document.getElementById("doc-list");
   const newDocButton = document.getElementById("new-doc-button");
+  const spriteEl = document.getElementById("doc-sprite");
 
-  if (!listEl || !newDocButton) {
-    throw new Error("Missing required DOM mount points: #doc-list and/or #new-doc-button");
+  if (!listEl || !newDocButton || !spriteEl) {
+    throw new Error("Missing required DOM mount points: #doc-list, #new-doc-button, and/or #doc-sprite");
   }
 
   newDocButton.addEventListener("click", () => {
@@ -40,8 +41,14 @@ async function main(): Promise<void> {
     const clamped = Math.max(0, Math.min(rows.length - 1, index));
     rows[selectedIndex]?.classList.remove("is-selected");
     selectedIndex = clamped;
-    rows[selectedIndex]?.classList.add("is-selected");
-    rows[selectedIndex]?.scrollIntoView({ block: "nearest" });
+    const row = rows[selectedIndex];
+    row?.classList.add("is-selected");
+    row?.scrollIntoView({ block: "nearest" });
+
+    if (row && spriteEl) {
+      spriteEl.style.visibility = "visible";
+      spriteEl.style.top = `${row.offsetTop + row.offsetHeight / 2 - spriteEl.offsetHeight / 2}px`;
+    }
   }
 
   docs.forEach((doc, index) => {

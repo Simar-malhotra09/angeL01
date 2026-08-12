@@ -360,10 +360,27 @@ body {
 }
 
 #doc-list {
+  position: relative;
   width: 100%;
   max-width: 700px;
   padding: 20vh 8px 20vh 8px;
   outline: none;
+}
+
+.doc-sprite {
+  position: absolute;
+  left: calc(50% - 15px);
+  width: 30px;
+  height: auto;
+  pointer-events: none;
+  visibility: hidden;
+  animation: doc-sprite-bounce 0.55s ease-in-out infinite;
+  transition: top 0.12s ease-out;
+}
+
+@keyframes doc-sprite-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
 }
 
 .doc-list-empty {
