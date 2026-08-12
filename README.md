@@ -9,7 +9,7 @@ bun run dev
 ```
 
 That is it. 
-
+- Supports vim motions natively with @replit/codemirror-vim.
 - `Cmd + Shift + P` to see shortcuts. 
 - :w initiates explicit write to sqlite db.
 - :wq/:q writes and goes back to homepage.
