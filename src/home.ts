@@ -1,5 +1,6 @@
 import "./style.css";
 import { deleteDoc, listDocs, type DocSummary } from "./storage";
+import { stripInlineMarkdown } from "./markdown/markdown-to-html";
 
 function formatUpdatedAt(ts: number): string {
   return new Date(ts).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -137,7 +138,7 @@ function attachSpriteDrag(spriteEl: HTMLElement, rows: HTMLButtonElement[], dock
     floatY = Math.max(0, Math.min(window.innerHeight - rect.height, clientY - dragOffsetY));
 
     const angle = Math.random() * Math.PI * 2;
-    const speed = 0.6 + Math.random() * 0.6;
+    const speed = 0.6 + Math.random() * 0.9;
     floatVX = Math.cos(angle) * speed;
     floatVY = Math.sin(angle) * speed;
 
@@ -301,7 +302,7 @@ async function main(): Promise<void> {
 
     const title = document.createElement("span");
     title.className = "doc-row-title";
-    title.textContent = doc.title.trim().length > 0 ? doc.title : "untitled";
+    title.textContent = doc.title.trim().length > 0 ? stripInlineMarkdown(doc.title) : "untitled";
 
     const date = document.createElement("span");
     date.className = "doc-row-date";
