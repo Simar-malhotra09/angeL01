@@ -185,6 +185,11 @@ export function createEditor(
         return true;
       },
       click: (event, view) => {
+        const vimState = getCM(view)?.state.vim;
+        const inNormalMode = !vimState || (!vimState.insertMode && !vimState.visualMode);
+        if (!inNormalMode) {
+          return false;
+        }
         const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
         if (pos === null) {
           return false;
