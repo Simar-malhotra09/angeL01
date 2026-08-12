@@ -10,7 +10,7 @@ import {
 import { EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { search, searchKeymap } from "@codemirror/search";
-import { saveDraft, putText, } from "../storage";
+import { saveDraft, putText, pushDoc, type Doc } from "../storage";
 import { Vim, vim, getCM} from "@replit/codemirror-vim";
 import { resolveTypographyInsert } from "../markdown/smart-typography";
 import { urlHoverTooltip, findLinkAt } from "../tooltip/url-tooltip";
@@ -52,11 +52,29 @@ export function createEditor(
   const paletteCommands = createPaletteCommands(fileInput);
   let palette: CommandPalette | null = null;
 
+  let bufferTimeout: ReturnType<typeof setTimeout> | null = null;
+  const BUFFER_DEBOUNCE_MS = 1500;
+
   const changeListener = EditorView.updateListener.of((update) => {
     if (update.docChanged) {
       const text = update.state.doc.toString();
       saveDraft(text);
       callbacks.onChange(text);
+
+      if (bufferTimeout !== null) {
+        clearTimeout(bufferTimeout);
+      }
+      bufferTimeout = setTimeout(() => {
+        const docID = getDocID();
+        const now = Date.now();
+        putText(docID, {
+          id: docID,
+          title: "",
+          content: text,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }, BUFFER_DEBOUNCE_MS);
     }
     if (update.docChanged || update.selectionSet) {
       callbacks.onUpdate(update);
@@ -81,17 +99,23 @@ export function createEditor(
   });
 
   Vim.defineEx("write", "w", (cm) => {
-    console.log(`[INFO]: Saving to indexedDB!: ${cm.getValue()}`);
     const docID = getDocID();
     const now = Date.now();
-
-    putText(docID, {
+    const doc: Doc = {
       id: docID,
       title: "",
       content: cm.getValue(),
       createdAt: now,
       updatedAt: now,
-    });
+    };
+
+    if (bufferTimeout !== null) {
+      clearTimeout(bufferTimeout);
+      bufferTimeout = null;
+    }
+
+    putText(docID, doc);
+    void pushDoc(doc);
   });
 
   const extensions: Extension[] = [
