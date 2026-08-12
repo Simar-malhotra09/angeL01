@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun --hot src/index.ts",
-    "build": "tsc -b && bun build ./index.html --outdir dist --minify",
+    "build": "tsc -b && bun build ./index.html ./editor.html --outdir dist --minify",
     "preview": "bunx serve dist"
   },
   "dependencies": {

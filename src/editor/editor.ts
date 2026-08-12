@@ -26,6 +26,7 @@ import { createCommandPalette, type CommandPalette } from "./command-palette";
 export interface EditorCallbacks {
   onChange: (text: string) => void;
   onUpdate: (update: ViewUpdate) => void;
+  getTitle: () => string;
 }
 
 export function createEditor(
@@ -69,7 +70,7 @@ export function createEditor(
         const now = Date.now();
         putText(docID, {
           id: docID,
-          title: "",
+          title: callbacks.getTitle(),
           content: text,
           createdAt: now,
           updatedAt: now,
@@ -98,12 +99,12 @@ export function createEditor(
     return true;
   });
 
-  Vim.defineEx("write", "w", (cm) => {
+  function saveDoc(cm: { getValue: () => string }): Doc {
     const docID = getDocID();
     const now = Date.now();
     const doc: Doc = {
       id: docID,
-      title: "",
+      title: callbacks.getTitle(),
       content: cm.getValue(),
       createdAt: now,
       updatedAt: now,
@@ -116,6 +117,21 @@ export function createEditor(
 
     putText(docID, doc);
     void pushDoc(doc);
+    return doc;
+  }
+
+  Vim.defineEx("write", "w", (cm) => {
+    saveDoc(cm);
+  });
+
+  Vim.defineEx("quit", "q", (cm) => {
+    saveDoc(cm);
+    window.location.href = "/";
+  });
+
+  Vim.defineEx("wq", "wq", (cm) => {
+    saveDoc(cm);
+    window.location.href = "/";
   });
 
   const extensions: Extension[] = [
