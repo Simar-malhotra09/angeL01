@@ -4,6 +4,15 @@ import { getText, getDocID } from "./storage";
 import { countWords, formatWordCount } from "./word-count";
 import { createToc, type Toc } from "./toc";
 import { exportDocumentAsHtml } from "./export";
+import { parseHeading } from "./markdown/headings";
+
+function titleFromContent(content: string): string {
+  const firstLine = content.split("\n").find((line) => line.trim().length > 0);
+  if (!firstLine) {
+    return "";
+  }
+  return (parseHeading(firstLine)?.text ?? firstLine).trim();
+}
 
 async function main(): Promise<void> {
   const shell = document.getElementById("editor-shell");
@@ -24,7 +33,15 @@ async function main(): Promise<void> {
 
   wordCountEl.textContent = formatWordCount(countWords(initialDoc));
 
-  docTitleEl.value = doc?.title && doc.title.trim().length > 0 ? doc.title : "untitled";
+  const savedTitle = doc?.title?.trim() ?? "";
+  const autoTitle = titleFromContent(initialDoc);
+  let titleIsExplicit = savedTitle.length > 0 && savedTitle !== (autoTitle || "untitled");
+
+  docTitleEl.value = savedTitle.length > 0 ? savedTitle : autoTitle || "untitled";
+
+  docTitleEl.addEventListener("input", () => {
+    titleIsExplicit = true;
+  });
 
   docTitleEl.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -37,6 +54,9 @@ async function main(): Promise<void> {
   const view = createEditor(shell, initialDoc, {
     onChange: (text) => {
       wordCountEl.textContent = formatWordCount(countWords(text));
+      if (!titleIsExplicit) {
+        docTitleEl.value = titleFromContent(text) || "untitled";
+      }
     },
     onUpdate: () => {
       toc?.update();
