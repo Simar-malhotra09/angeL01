@@ -20,11 +20,12 @@ async function main(): Promise<void> {
   const wordCountEl = document.getElementById("word-count");
   const tocEl = document.getElementById("toc");
   const exportButton = document.getElementById("export-button");
+  const copyButton = document.getElementById("copy-button");
   const docTitleEl = document.querySelector<HTMLInputElement>("#doc-title");
 
-  if (!shell || !wordCountEl || !tocEl || !exportButton || !docTitleEl) {
+  if (!shell || !wordCountEl || !tocEl || !exportButton || !copyButton || !docTitleEl) {
     throw new Error(
-      "Missing required DOM mount points: #editor-shell, #word-count, #toc, #export-button, and/or #doc-title",
+      "Missing required DOM mount points: #editor-shell, #word-count, #toc, #export-button, #copy-button, and/or #doc-title",
     );
   }
 
@@ -73,6 +74,16 @@ async function main(): Promise<void> {
   exportButton.addEventListener("click", () => {
     const title = docTitleEl.value.trim();
     void exportDocumentAsHtml(view, title.length > 0 ? title : "untitled");
+  });
+
+  copyButton.addEventListener("click", () => {
+    void navigator.clipboard.writeText(view.state.doc.toString()).then(() => {
+      const original = copyButton.textContent;
+      copyButton.textContent = "Copied!";
+      setTimeout(() => {
+        copyButton.textContent = original;
+      }, 1500);
+    });
   });
 
   view.focus();
