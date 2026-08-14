@@ -19,11 +19,7 @@ function truncate(text: string): string {
     : collapsed;
 }
 
-export function createHighlightSidebar(
-  container: HTMLElement,
-  footnote: HTMLElement,
-  view: EditorView,
-): HighlightSidebar {
+export function createHighlightSidebar(container: HTMLElement, view: EditorView): HighlightSidebar {
   function jumpTo(pos: number): void {
     view.dispatch({ selection: EditorSelection.cursor(pos), scrollIntoView: true });
     view.focus();
@@ -36,7 +32,6 @@ export function createHighlightSidebar(
   function render(): void {
     const highlights = getHighlights(view.state);
     container.replaceChildren();
-    footnote.hidden = highlights.length === 0;
 
     if (highlights.length === 0) {
       return;

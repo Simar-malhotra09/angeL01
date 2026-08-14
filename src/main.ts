@@ -26,7 +26,6 @@ async function main(): Promise<void> {
   const copyButton = document.getElementById("copy-button");
   const docTitleEl = document.querySelector<HTMLInputElement>("#doc-title");
   const highlightPanelEl = document.getElementById("highlight-panel");
-  const highlightFootnoteEl = document.getElementById("highlight-footnote");
 
   if (
     !shell ||
@@ -36,11 +35,10 @@ async function main(): Promise<void> {
     !exportButton ||
     !copyButton ||
     !docTitleEl ||
-    !highlightPanelEl ||
-    !highlightFootnoteEl
+    !highlightPanelEl
   ) {
     throw new Error(
-      "Missing required DOM mount points: #editor-shell, #editor-wrap, #word-count, #toc, #export-button, #copy-button, #doc-title, #highlight-panel, and/or #highlight-footnote",
+      "Missing required DOM mount points: #editor-shell, #editor-wrap, #word-count, #toc, #export-button, #copy-button, #doc-title, and/or #highlight-panel",
     );
   }
 
@@ -88,7 +86,7 @@ async function main(): Promise<void> {
   });
 
   toc = createToc(tocEl, view);
-  highlightSidebar = createHighlightSidebar(highlightPanelEl, highlightFootnoteEl, view);
+  highlightSidebar = createHighlightSidebar(highlightPanelEl, view);
 
   let scrollUpdateScheduled = false;
   const scheduleHighlightUpdate = (): void => {
