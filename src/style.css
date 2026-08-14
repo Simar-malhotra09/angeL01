@@ -508,3 +508,91 @@ body {
 .doc-context-menu-row:hover {
   background: rgba(181, 98, 74, 0.08);
 }
+
+.cm-highlight {
+  background: rgba(181, 98, 74, 0.14);
+  border-bottom: 1px solid rgba(181, 98, 74, 0.4);
+}
+
+#highlight-panel {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 40px;
+  bottom: 0;
+  width: 200px;
+  pointer-events: none;
+}
+
+@media (min-width: 1100px) {
+  #highlight-panel {
+    display: block;
+  }
+}
+
+.highlight-card {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  pointer-events: auto;
+  padding: 6px 10px;
+  border-left: 2px solid var(--accent);
+  cursor: pointer;
+}
+
+.highlight-card-label {
+  display: block;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.highlight-card-snippet {
+  margin: 3px 0 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--faint);
+}
+
+.highlight-card-remove {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  border: none;
+  background: none;
+  padding: 2px 4px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--faint);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.highlight-card:hover .highlight-card-remove {
+  opacity: 1;
+}
+
+.highlight-card-remove:hover {
+  color: var(--accent);
+}
+
+#highlight-footnote {
+  display: none;
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  width: 200px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--faint);
+  pointer-events: none;
+}
+
+@media (min-width: 1100px) {
+  #highlight-footnote:not([hidden]) {
+    display: block;
+  }
+}
