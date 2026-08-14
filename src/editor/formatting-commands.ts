@@ -70,30 +70,23 @@ export function makeToggleHeading(level: 1 | 2 | 3): Command {
   };
 }
 
-const LINK_URL_PLACEHOLDER = "https://";
-
 export const insertLink: Command = (view) => {
   const { state } = view;
   const changes = state.changeByRange((range) => {
-    const hasSelection = !range.empty;
-    const label = hasSelection ? state.sliceDoc(range.from, range.to) : "link";
-    const prefix = `[${label}](`;
-    const insert = `${prefix}${LINK_URL_PLACEHOLDER})`;
-
-    if (hasSelection) {
-      const urlFrom = range.from + prefix.length;
-      const urlTo = urlFrom + LINK_URL_PLACEHOLDER.length;
+    if (range.empty) {
+      const insert = "[]()";
       return {
-        changes: { from: range.from, to: range.to, insert },
-        range: EditorSelection.range(urlFrom, urlTo),
+        changes: { from: range.from, insert },
+        range: EditorSelection.cursor(range.from + 1),
       };
     }
 
-    const labelFrom = range.from + 1;
-    const labelTo = labelFrom + label.length;
+    const label = state.sliceDoc(range.from, range.to);
+    const insert = `[${label}]()`;
+    const cursor = range.from + label.length + 3;
     return {
-      changes: { from: range.from, insert },
-      range: EditorSelection.range(labelFrom, labelTo),
+      changes: { from: range.from, to: range.to, insert },
+      range: EditorSelection.cursor(cursor),
     };
   });
 
