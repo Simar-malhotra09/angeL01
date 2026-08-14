@@ -1,11 +1,56 @@
+import { EditorSelection } from "@codemirror/state";
 import type { Command } from "@codemirror/view";
 import { toggleBold, toggleItalic, makeToggleHeading, insertLink } from "./formatting-commands";
+import { BUCKETS, type BucketId } from "../highlights/buckets";
+import { addHighlightEffect, findHighlightAt, removeHighlightEffect } from "../highlights/highlight-field";
 
 export interface PaletteCommand {
   id: string;
   label: string;
   keys: string;
   run: Command;
+}
+
+function highlightSelection(bucket: BucketId): Command {
+  return (view) => {
+    const range = view.state.selection.main;
+    if (range.empty) {
+      return false;
+    }
+    view.dispatch({
+      effects: addHighlightEffect.of({
+        id: crypto.randomUUID(),
+        from: range.from,
+        to: range.to,
+        bucket,
+        createdAt: Date.now(),
+      }),
+      selection: EditorSelection.cursor(range.from),
+    });
+    return true;
+  };
+}
+
+const removeHighlight: Command = (view) => {
+  const highlight = findHighlightAt(view.state, view.state.selection.main.head);
+  if (!highlight) {
+    return false;
+  }
+  view.dispatch({ effects: removeHighlightEffect.of(highlight.id) });
+  return true;
+};
+
+function highlightPaletteCommands(): PaletteCommand[] {
+  const bucketCommands = BUCKETS.map((bucket, index) => ({
+    id: `highlight-${bucket.id}`,
+    label: `Highlight: ${bucket.label}`,
+    keys: `Mod-Alt-Shift-${index + 1}`,
+    run: highlightSelection(bucket.id),
+  }));
+  return [
+    ...bucketCommands,
+    { id: "highlight-remove", label: "Remove Highlight", keys: "Mod-Alt-Shift-0", run: removeHighlight },
+  ];
 }
 
 export function createPaletteCommands(fileInput: HTMLInputElement): PaletteCommand[] {
@@ -25,5 +70,6 @@ export function createPaletteCommands(fileInput: HTMLInputElement): PaletteComma
         return true;
       },
     },
+    ...highlightPaletteCommands(),
   ];
 }
