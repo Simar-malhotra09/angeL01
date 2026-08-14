@@ -19,7 +19,6 @@ function titleFromContent(content: string): string {
 
 async function main(): Promise<void> {
   const shell = document.getElementById("editor-shell");
-  const editorWrap = document.getElementById("editor-wrap");
   const wordCountEl = document.getElementById("word-count");
   const tocEl = document.getElementById("toc");
   const exportButton = document.getElementById("export-button");
@@ -29,7 +28,6 @@ async function main(): Promise<void> {
 
   if (
     !shell ||
-    !editorWrap ||
     !wordCountEl ||
     !tocEl ||
     !exportButton ||
@@ -38,7 +36,7 @@ async function main(): Promise<void> {
     !highlightPanelEl
   ) {
     throw new Error(
-      "Missing required DOM mount points: #editor-shell, #editor-wrap, #word-count, #toc, #export-button, #copy-button, #doc-title, and/or #highlight-panel",
+      "Missing required DOM mount points: #editor-shell, #word-count, #toc, #export-button, #copy-button, #doc-title, and/or #highlight-panel",
     );
   }
 
@@ -99,7 +97,7 @@ async function main(): Promise<void> {
       highlightSidebar?.update();
     });
   };
-  editorWrap.addEventListener("scroll", scheduleHighlightUpdate);
+  view.scrollDOM.addEventListener("scroll", scheduleHighlightUpdate);
   window.addEventListener("resize", scheduleHighlightUpdate);
 
   exportButton.addEventListener("click", () => {

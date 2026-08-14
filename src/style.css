@@ -112,13 +112,18 @@ body {
   flex: 1;
   display: flex;
   justify-content: center;
-  overflow-y: auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 #editor-shell {
   width: 100%;
   max-width: 700px;
-  padding: 14vh 8px 20vh 8px;
+  height: 100%;
+}
+
+.cm-editor {
+  height: 100%;
 }
 
 .cm-editor,
@@ -130,7 +135,7 @@ body {
   font-family: "iA Writer Duospace", Georgia, "Iowan Old Style", serif;
   font-size: 19px;
   line-height: 1.75;
-  padding: 0 !important;
+  padding: 14vh 8px 20vh 8px !important;
   caret-color: var(--accent);
 }
 
