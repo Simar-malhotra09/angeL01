@@ -22,6 +22,15 @@ import { getDocID } from "../storage";
 import { isSupportedImageType, IMAGE_FILE_ACCEPT } from "../image/image-format";
 import { createPaletteCommands } from "./commands";
 import { createCommandPalette, type CommandPalette } from "./command-palette";
+import {
+  getHighlights,
+  hasHighlightEffect,
+  highlightDecorations,
+  highlightField,
+  loadHighlightsEffect,
+  type Highlight,
+} from "../highlights/highlight-field";
+import { putHighlightRecords } from "../highlights/highlight-store";
 
 export interface EditorCallbacks {
   onChange: (text: string) => void;
@@ -32,6 +41,7 @@ export interface EditorCallbacks {
 export function createEditor(
   parent: HTMLElement,
   initialDoc: string,
+  initialHighlights: readonly Highlight[],
   callbacks: EditorCallbacks,
 ): EditorView {
 
@@ -55,6 +65,8 @@ export function createEditor(
   let bufferTimeout: ReturnType<typeof setTimeout> | null = null;
   const BUFFER_DEBOUNCE_MS = 1500;
 
+  let highlightBufferTimeout: ReturnType<typeof setTimeout> | null = null;
+
   const changeListener = EditorView.updateListener.of((update) => {
     if (update.docChanged) {
       const text = update.state.doc.toString();
@@ -76,7 +88,23 @@ export function createEditor(
         });
       }, BUFFER_DEBOUNCE_MS);
     }
-    if (update.docChanged || update.selectionSet) {
+
+    const highlightsTouched =
+      update.docChanged || update.transactions.some((tr) => hasHighlightEffect(tr.effects));
+    if (highlightsTouched) {
+      if (highlightBufferTimeout !== null) {
+        clearTimeout(highlightBufferTimeout);
+      }
+      highlightBufferTimeout = setTimeout(() => {
+        void putHighlightRecords(getDocID(), getHighlights(update.state));
+      }, BUFFER_DEBOUNCE_MS);
+    }
+
+    if (
+      update.docChanged ||
+      update.selectionSet ||
+      update.transactions.some((tr) => hasHighlightEffect(tr.effects))
+    ) {
       callbacks.onUpdate(update);
     }
   });
@@ -159,6 +187,8 @@ export function createEditor(
     smartTypographyHandler,
     markdownDecorations,
     imageEmbed,
+    highlightField,
+    highlightDecorations,
     EditorView.domEventHandlers({
       paste: (event, view) => {
         const file = event.clipboardData?.files[0];
@@ -216,6 +246,10 @@ export function createEditor(
 
   const view = new EditorView({ state, parent });
   palette = createCommandPalette(view, paletteCommands);
+
+  if (initialHighlights.length > 0) {
+    view.dispatch({ effects: loadHighlightsEffect.of(initialHighlights) });
+  }
 
   return view;
 }

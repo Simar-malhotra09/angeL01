@@ -6,6 +6,8 @@ import { createToc, type Toc } from "./toc";
 import { exportDocumentAsHtml } from "./export";
 import { parseHeading } from "./markdown/headings";
 import { stripInlineMarkdown } from "./markdown/markdown-to-html";
+import { getHighlightRecords } from "./highlights/highlight-store";
+import { createHighlightSidebar, type HighlightSidebar } from "./highlights/highlight-sidebar";
 
 function titleFromContent(content: string): string {
   const firstLine = content.split("\n").find((line) => line.trim().length > 0);
@@ -17,21 +19,35 @@ function titleFromContent(content: string): string {
 
 async function main(): Promise<void> {
   const shell = document.getElementById("editor-shell");
+  const editorWrap = document.getElementById("editor-wrap");
   const wordCountEl = document.getElementById("word-count");
   const tocEl = document.getElementById("toc");
   const exportButton = document.getElementById("export-button");
   const copyButton = document.getElementById("copy-button");
   const docTitleEl = document.querySelector<HTMLInputElement>("#doc-title");
+  const highlightPanelEl = document.getElementById("highlight-panel");
+  const highlightFootnoteEl = document.getElementById("highlight-footnote");
 
-  if (!shell || !wordCountEl || !tocEl || !exportButton || !copyButton || !docTitleEl) {
+  if (
+    !shell ||
+    !editorWrap ||
+    !wordCountEl ||
+    !tocEl ||
+    !exportButton ||
+    !copyButton ||
+    !docTitleEl ||
+    !highlightPanelEl ||
+    !highlightFootnoteEl
+  ) {
     throw new Error(
-      "Missing required DOM mount points: #editor-shell, #word-count, #toc, #export-button, #copy-button, and/or #doc-title",
+      "Missing required DOM mount points: #editor-shell, #editor-wrap, #word-count, #toc, #export-button, #copy-button, #doc-title, #highlight-panel, and/or #highlight-footnote",
     );
   }
 
   const id = getDocID();
   const doc = await getText(id);
   const initialDoc = doc?.content ?? "";
+  const initialHighlights = await getHighlightRecords(id);
 
   wordCountEl.textContent = formatWordCount(countWords(initialDoc));
 
@@ -52,8 +68,9 @@ async function main(): Promise<void> {
   });
 
   let toc: Toc | null = null;
+  let highlightSidebar: HighlightSidebar | null = null;
 
-  const view = createEditor(shell, initialDoc, {
+  const view = createEditor(shell, initialDoc, initialHighlights, {
     onChange: (text) => {
       wordCountEl.textContent = formatWordCount(countWords(text));
       if (!titleIsExplicit) {
@@ -62,6 +79,7 @@ async function main(): Promise<void> {
     },
     onUpdate: () => {
       toc?.update();
+      highlightSidebar?.update();
     },
     getTitle: () => {
       const title = docTitleEl.value.trim();
@@ -70,6 +88,21 @@ async function main(): Promise<void> {
   });
 
   toc = createToc(tocEl, view);
+  highlightSidebar = createHighlightSidebar(highlightPanelEl, highlightFootnoteEl, view);
+
+  let scrollUpdateScheduled = false;
+  const scheduleHighlightUpdate = (): void => {
+    if (scrollUpdateScheduled) {
+      return;
+    }
+    scrollUpdateScheduled = true;
+    requestAnimationFrame(() => {
+      scrollUpdateScheduled = false;
+      highlightSidebar?.update();
+    });
+  };
+  editorWrap.addEventListener("scroll", scheduleHighlightUpdate);
+  window.addEventListener("resize", scheduleHighlightUpdate);
 
   exportButton.addEventListener("click", () => {
     const title = docTitleEl.value.trim();
