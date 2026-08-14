@@ -67,7 +67,8 @@ function renderBlockImage(label: string, src: string | null): string {
   if (src === null) {
     return `<p class="x-image-block-missing">${escapeHtml(label)}</p>`;
   }
-  return `<p class="x-image-block"><img src="${escapeHtml(src)}" alt="${escapeHtml(label)}"></p>`;
+  const caption = label.length > 0 ? `<p class="x-image-caption">${escapeHtml(label)}</p>` : "";
+  return `<p class="x-image-block"><img src="${escapeHtml(src)}" alt="${escapeHtml(label)}"></p>${caption}`;
 }
 
 export function stripInlineMarkdown(text: string): string {

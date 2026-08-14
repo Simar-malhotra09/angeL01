@@ -23,6 +23,13 @@ class ImageBlockWidget extends WidgetType {
     img.alt = this.label;
     wrapper.appendChild(img);
 
+    if (this.label.length > 0) {
+      const caption = document.createElement("div");
+      caption.className = "cm-image-caption";
+      caption.textContent = this.label;
+      wrapper.appendChild(caption);
+    }
+
     void getImage(this.id).then((blob) => {
       if (blob === null) {
         return;

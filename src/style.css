@@ -59,6 +59,25 @@ body {
   color: var(--fg);
 }
 
+#copy-button {
+  position: fixed;
+  bottom: 44px;
+  right: 24px;
+  padding: 8px 14px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#copy-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 #statusbar {
   position: fixed;
   bottom: 0;
@@ -227,6 +246,14 @@ body {
 .cm-image-block img {
   max-width: 100%;
   border-radius: 4px;
+}
+
+.cm-image-caption {
+  margin: 0.4em 0 1.5em 0;
+  text-align: center;
+  font-size: 0.75em;
+  font-style: italic;
+  color: var(--faint);
 }
 
 #toc {
