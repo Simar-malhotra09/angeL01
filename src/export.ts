@@ -73,6 +73,9 @@ a:hover { text-decoration: underline; }
   margin: 1.5em 0;
   text-align: center;
 }
+.x-image-block:has(+ .x-image-caption) {
+  margin-bottom: 0;
+}
 .x-image-block img {
   max-width: 100%;
   border-radius: 4px;
@@ -82,13 +85,20 @@ a:hover { text-decoration: underline; }
   color: #a39f92;
   font-style: italic;
 }
+.x-image-caption {
+  margin: 0.4em 0 1.5em 0;
+  text-align: center;
+  font-size: 0.75em;
+  font-style: italic;
+  color: #a39f92;
+}
 
 nav.x-toc {
   display: none;
   position: fixed;
   top: 14vh;
-  left: 40px;
-  width: 180px;
+  left: 24px;
+  width: 170px;
   max-height: 70vh;
   overflow-y: auto;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
@@ -110,8 +120,26 @@ nav.x-toc a:hover {
 nav.x-toc a.x-toc-2 { padding-left: 12px; }
 nav.x-toc a.x-toc-3 { padding-left: 24px; }
 
-@media (min-width: 1100px) {
+@media (min-width: 1150px) {
   nav.x-toc { display: block; }
+}
+
+.x-copy-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 8px 14px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  color: #2b2822;
+  background: #faf8f4;
+  border: 1px solid #a39f92;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.x-copy-btn:hover {
+  border-color: #b5624a;
+  color: #b5624a;
 }
 `;
 
@@ -165,7 +193,7 @@ function renderToc(headings: readonly TocHeading[]): string {
   return `<nav class="x-toc">\n${links}\n</nav>`;
 }
 
-function buildHtmlDocument(title: string, bodyHtml: string, tocHtml: string): string {
+function buildHtmlDocument(title: string, bodyHtml: string, tocHtml: string, rawText: string): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -179,6 +207,19 @@ ${tocHtml}
 <main>
 ${bodyHtml}
 </main>
+<button type="button" class="x-copy-btn" id="x-copy-btn" data-source="${escapeHtml(rawText)}">Copy all text</button>
+<script>
+document.getElementById("x-copy-btn").addEventListener("click", function (event) {
+  var button = event.currentTarget;
+  navigator.clipboard.writeText(button.dataset.source).then(function () {
+    var original = button.textContent;
+    button.textContent = "Copied!";
+    setTimeout(function () {
+      button.textContent = original;
+    }, 1500);
+  });
+});
+</script>
 </body>
 </html>
 `;
@@ -199,5 +240,5 @@ export async function exportDocumentAsHtml(view: EditorView, title: string): Pro
   const imageDataUrls = await resolveImageDataUrls(doc);
   const { html: bodyHtml, headings } = renderMarkdownToHtml(doc, (id) => imageDataUrls.get(id) ?? null);
   const filename = `${slugify(title)}.html`;
-  downloadHtmlFile(filename, buildHtmlDocument(title, bodyHtml, renderToc(headings)));
+  downloadHtmlFile(filename, buildHtmlDocument(title, bodyHtml, renderToc(headings), doc));
 }
