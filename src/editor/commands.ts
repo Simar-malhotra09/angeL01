@@ -1,6 +1,4 @@
 import type { Command } from "@codemirror/view";
-import { undo, redo } from "@codemirror/commands";
-import { openSearchPanel } from "@codemirror/search";
 import { toggleBold, toggleItalic, makeToggleHeading, insertLink } from "./formatting-commands";
 
 export interface PaletteCommand {
@@ -27,8 +25,5 @@ export function createPaletteCommands(fileInput: HTMLInputElement): PaletteComma
         return true;
       },
     },
-    { id: "undo", label: "Undo", keys: "Mod-z", run: undo },
-    { id: "redo", label: "Redo", keys: "Mod-Shift-z", run: redo },
-    { id: "find", label: "Find", keys: "Mod-f", run: openSearchPanel },
   ];
 }
