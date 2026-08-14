@@ -63,18 +63,17 @@ body {
   position: fixed;
   bottom: 44px;
   right: 24px;
-  padding: 8px 14px;
+  padding: 4px;
+  border: none;
+  background: none;
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 12px;
-  color: var(--fg);
-  background: var(--bg);
-  border: 1px solid var(--faint);
-  border-radius: 6px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--faint);
   cursor: pointer;
 }
 
 #copy-button:hover {
-  border-color: var(--accent);
   color: var(--accent);
 }
 
@@ -576,23 +575,4 @@ body {
 
 .highlight-card-remove:hover {
   color: var(--accent);
-}
-
-#highlight-footnote {
-  display: none;
-  position: fixed;
-  bottom: 40px;
-  right: 40px;
-  width: 200px;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 10px;
-  letter-spacing: 0.02em;
-  color: var(--faint);
-  pointer-events: none;
-}
-
-@media (min-width: 1100px) {
-  #highlight-footnote:not([hidden]) {
-    display: block;
-  }
 }
