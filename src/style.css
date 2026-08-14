@@ -126,6 +126,14 @@ body {
   height: 100%;
 }
 
+.cm-scroller {
+  scrollbar-width: none;
+}
+
+.cm-scroller::-webkit-scrollbar {
+  display: none;
+}
+
 .cm-editor,
 .cm-editor.cm-focused {
   outline: none !important;
