@@ -66,6 +66,9 @@ export function createEditor(
   let bufferTimeout: ReturnType<typeof setTimeout> | null = null;
   const BUFFER_DEBOUNCE_MS = 1500;
 
+  let syncTimeout: ReturnType<typeof setTimeout> | null = null;
+  const SYNC_DEBOUNCE_MS = 5000;
+
   let highlightBufferTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const changeListener = EditorView.updateListener.of((update) => {
@@ -87,6 +90,22 @@ export function createEditor(
           updatedAt: Date.now(),
         });
       }, BUFFER_DEBOUNCE_MS);
+
+      if (syncTimeout !== null) {
+        clearTimeout(syncTimeout);
+      }
+      syncTimeout = setTimeout(() => {
+        const docID = getDocID();
+        pushDoc({
+          id: docID,
+          title: callbacks.getTitle(),
+          content: text,
+          createdAt,
+          updatedAt: Date.now(),
+        }).catch((error: unknown) => {
+          console.error(`Failed to autosync doc ${docID} to server`, error);
+        });
+      }, SYNC_DEBOUNCE_MS);
     }
 
     const highlightsTouched =
@@ -139,6 +158,10 @@ export function createEditor(
     if (bufferTimeout !== null) {
       clearTimeout(bufferTimeout);
       bufferTimeout = null;
+    }
+    if (syncTimeout !== null) {
+      clearTimeout(syncTimeout);
+      syncTimeout = null;
     }
 
     await putText(docID, doc);
