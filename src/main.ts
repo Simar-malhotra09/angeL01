@@ -66,7 +66,7 @@ async function main(): Promise<void> {
   let toc: Toc | null = null;
   let highlightSidebar: HighlightSidebar | null = null;
 
-  const view = createEditor(shell, initialDoc, initialHighlights, {
+  const view = createEditor(shell, initialDoc, initialHighlights, doc?.createdAt ?? Date.now(), {
     onChange: (text) => {
       wordCountEl.textContent = formatWordCount(countWords(text));
       if (!titleIsExplicit) {

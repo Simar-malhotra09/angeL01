@@ -42,6 +42,7 @@ export function createEditor(
   parent: HTMLElement,
   initialDoc: string,
   initialHighlights: readonly Highlight[],
+  createdAt: number,
   callbacks: EditorCallbacks,
 ): EditorView {
 
@@ -78,13 +79,12 @@ export function createEditor(
       }
       bufferTimeout = setTimeout(() => {
         const docID = getDocID();
-        const now = Date.now();
         putText(docID, {
           id: docID,
           title: callbacks.getTitle(),
           content: text,
-          createdAt: now,
-          updatedAt: now,
+          createdAt,
+          updatedAt: Date.now(),
         });
       }, BUFFER_DEBOUNCE_MS);
     }
@@ -128,13 +128,12 @@ export function createEditor(
 
   function saveDoc(cm: { getValue: () => string }): Doc {
     const docID = getDocID();
-    const now = Date.now();
     const doc: Doc = {
       id: docID,
       title: callbacks.getTitle(),
       content: cm.getValue(),
-      createdAt: now,
-      updatedAt: now,
+      createdAt,
+      updatedAt: Date.now(),
     };
 
     if (bufferTimeout !== null) {
