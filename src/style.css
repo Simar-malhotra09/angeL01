@@ -436,8 +436,13 @@ body {
 }
 
 @keyframes doc-sprite-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
 }
 
 .doc-list-empty {
@@ -448,9 +453,9 @@ body {
 
 .doc-row {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   width: 100%;
   margin: 0;
   border: none;
@@ -468,6 +473,14 @@ body {
   background: rgba(181, 98, 74, 0.08);
 }
 
+.doc-row-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
 .doc-row-title {
   font-size: 17px;
   overflow: hidden;
@@ -481,6 +494,19 @@ body {
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--faint);
+}
+
+.doc-row-status {
+  align-self: flex-start;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  border: 1px solid rgba(163, 159, 146, 0.3);
+  border-radius: 3px;
+  padding: 1px 6px;
+  white-space: nowrap;
 }
 
 .doc-context-menu {
