@@ -144,9 +144,15 @@ async function getRemoteText(id: string): Promise<Doc | null> {
 }
 
 export async function getText(id: string): Promise<Doc | null> {
-  const [local, remote] = await Promise.all([getLocalText(id), getRemoteText(id)]);
+  const [local, remote] = await Promise.all([
+    getLocalText(id),
+    getRemoteText(id),
+  ]);
 
-  if (remote !== null && (local === null || remote.updatedAt > local.updatedAt)) {
+  if (
+    remote !== null &&
+    (local === null || remote.updatedAt > local.updatedAt)
+  ) {
     await putText(id, remote);
     return remote;
   }
@@ -154,7 +160,7 @@ export async function getText(id: string): Promise<Doc | null> {
   return local;
 }
 
-export async function pushDoc(doc: Doc): Promise<void> {
+export async function pushDoc(doc: Doc, keepalive: boolean): Promise<void> {
   const res = await fetch(`/api/docs/${doc.id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -163,6 +169,7 @@ export async function pushDoc(doc: Doc): Promise<void> {
       content: doc.content,
       createdAt: doc.createdAt,
     }),
+    keepalive,
   });
   if (!res.ok) {
     throw new Error(`Failed to sync doc ${doc.id}: ${res.status}`);

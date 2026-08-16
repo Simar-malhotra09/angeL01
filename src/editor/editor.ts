@@ -71,11 +71,14 @@ export function createEditor(
 
   let highlightBufferTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  let dirty = false;
+
   const changeListener = EditorView.updateListener.of((update) => {
     if (update.docChanged) {
       const text = update.state.doc.toString();
       saveDraft(text);
       callbacks.onChange(text);
+      dirty = true;
 
       if (bufferTimeout !== null) {
         clearTimeout(bufferTimeout);
@@ -96,14 +99,19 @@ export function createEditor(
       }
       syncTimeout = setTimeout(() => {
         const docID = getDocID();
-        pushDoc({
-          id: docID,
-          title: callbacks.getTitle(),
-          content: text,
-          createdAt,
-          updatedAt: Date.now(),
-        }).catch((error: unknown) => {
+        dirty = false;
+        pushDoc(
+          {
+            id: docID,
+            title: callbacks.getTitle(),
+            content: text,
+            createdAt,
+            updatedAt: Date.now(),
+          },
+          false,
+        ).catch((error: unknown) => {
           console.error(`Failed to autosync doc ${docID} to server`, error);
+          dirty = true;
         });
       }, SYNC_DEBOUNCE_MS);
     }
@@ -165,10 +173,12 @@ export function createEditor(
     }
 
     await putText(docID, doc);
+    dirty = false;
     try {
-      await pushDoc(doc);
+      await pushDoc(doc, false);
     } catch (error) {
       console.error(`Failed to sync doc ${docID} to server; edit is still saved locally`, error);
+      dirty = true;
     }
     return doc;
   }
@@ -278,6 +288,32 @@ export function createEditor(
   if (initialHighlights.length > 0) {
     view.dispatch({ effects: loadHighlightsEffect.of(initialHighlights) });
   }
+
+  function flushPending(): void {
+    if (!dirty) {
+      return;
+    }
+    dirty = false;
+    const docID = getDocID();
+    const doc: Doc = {
+      id: docID,
+      title: callbacks.getTitle(),
+      content: view.state.doc.toString(),
+      createdAt,
+      updatedAt: Date.now(),
+    };
+    putText(docID, doc);
+    pushDoc(doc, true).catch((error: unknown) => {
+      console.error(`Failed to flush doc ${docID} to server on exit`, error);
+    });
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      flushPending();
+    }
+  });
+  window.addEventListener("pagehide", flushPending);
 
   return view;
 }
