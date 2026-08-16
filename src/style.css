@@ -507,6 +507,16 @@ body {
   border-radius: 3px;
   padding: 1px 6px;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.doc-row-status:hover {
+  color: var(--fg);
+  border-color: var(--faint);
+}
+
+.doc-status-menu .doc-context-menu-row.is-active {
+  color: var(--accent);
 }
 
 .doc-context-menu {

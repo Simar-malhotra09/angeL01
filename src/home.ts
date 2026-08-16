@@ -3,7 +3,9 @@ import {
   deleteDoc,
   listDocs,
   getStatus,
+  setStatus,
   STATUS_LABELS,
+  ALL_STATUSES,
   Status,
   type DocSummary,
 } from "./storage";
@@ -72,6 +74,74 @@ function createDocContextMenu(onDelete: (doc: DocSummary) => void): {
 
   function open(doc: DocSummary, x: number, y: number): void {
     target = doc;
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+    menu.classList.add("is-open");
+  }
+
+  return { open };
+}
+
+function createStatusMenu(onSelect: (doc: DocSummary, status: Status) => void): {
+  open: (doc: DocSummary, currentStatus: Status, x: number, y: number) => void;
+} {
+  const menu = document.createElement("div");
+  menu.className = "doc-context-menu doc-status-menu";
+
+  const statusRows = ALL_STATUSES.map((status) => {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = "doc-context-menu-row";
+    row.textContent = STATUS_LABELS[status];
+    menu.appendChild(row);
+    return { status, row };
+  });
+
+  document.body.appendChild(menu);
+
+  let target: DocSummary | null = null;
+
+  function close(): void {
+    menu.classList.remove("is-open");
+    target = null;
+  }
+
+  statusRows.forEach(({ status, row }) => {
+    row.addEventListener("click", () => {
+      if (target) {
+        onSelect(target, status);
+      }
+      close();
+    });
+  });
+
+  document.addEventListener("mousedown", (event) => {
+    if (
+      menu.classList.contains("is-open") &&
+      !menu.contains(event.target as Node)
+    ) {
+      close();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      close();
+    }
+  });
+
+  window.addEventListener("scroll", close, true);
+
+  function open(
+    doc: DocSummary,
+    currentStatus: Status,
+    x: number,
+    y: number,
+  ): void {
+    target = doc;
+    statusRows.forEach(({ status, row }) => {
+      row.classList.toggle("is-active", status === currentStatus);
+    });
     menu.style.left = `${x}px`;
     menu.style.top = `${y}px`;
     menu.classList.add("is-open");
@@ -275,6 +345,24 @@ async function main(): Promise<void> {
     return;
   }
 
+  const statuses = await Promise.all(docs.map((doc) => getStatus(doc.id)));
+
+  interface Entry {
+    doc: DocSummary;
+    status: Status;
+  }
+
+  const entries: Entry[] = docs.map((doc, index) => ({
+    doc,
+    status: statuses[index] ?? Status.Draft,
+  }));
+
+  function sortEntries(): void {
+    entries.sort((a, b) => a.status - b.status);
+  }
+
+  sortEntries();
+
   let selectedIndex = 0;
   let pendingG = false;
   const rows: HTMLButtonElement[] = [];
@@ -296,11 +384,11 @@ async function main(): Promise<void> {
   attachSpriteDrag(spriteEl, rows, () => selectIndex(selectedIndex));
 
   function removeDoc(doc: DocSummary): void {
-    const index = docs.findIndex((d) => d.id === doc.id);
+    const index = entries.findIndex((e) => e.doc.id === doc.id);
     if (index === -1) {
       return;
     }
-    docs.splice(index, 1);
+    entries.splice(index, 1);
     rows[index]?.remove();
     rows.splice(index, 1);
 
@@ -325,45 +413,80 @@ async function main(): Promise<void> {
       });
   });
 
-  const statuses = await Promise.all(docs.map((doc) => getStatus(doc.id)));
+  const statusMenu = createStatusMenu((doc, status) => {
+    setStatus(doc.id, status)
+      .then(() => {
+        const entry = entries.find((e) => e.doc.id === doc.id);
+        if (entry) {
+          entry.status = status;
+        }
+        renderRows();
+      })
+      .catch(() => {
+        alert("Failed to update status. Please try again.");
+      });
+  });
 
-  docs.forEach((doc, index) => {
-    const row = document.createElement("button");
-    row.type = "button";
-    row.className = "doc-row";
+  function renderRows(): void {
+    if (!listEl) {
+      return;
+    }
+    const selectedId = entries[selectedIndex]?.doc.id;
 
-    const main = document.createElement("div");
-    main.className = "doc-row-main";
+    sortEntries();
+    listEl.replaceChildren();
+    rows.length = 0;
 
-    const title = document.createElement("span");
-    title.className = "doc-row-title";
-    title.textContent =
-      doc.title.trim().length > 0 ? stripInlineMarkdown(doc.title) : "untitled";
+    entries.forEach(({ doc, status }) => {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "doc-row";
 
-    const date = document.createElement("span");
-    date.className = "doc-row-date";
-    date.textContent = formatUpdatedAt(doc.updatedAt);
+      const main = document.createElement("div");
+      main.className = "doc-row-main";
 
-    main.append(title, date);
+      const title = document.createElement("span");
+      title.className = "doc-row-title";
+      title.textContent =
+        doc.title.trim().length > 0
+          ? stripInlineMarkdown(doc.title)
+          : "untitled";
 
-    const status = document.createElement("span");
-    status.className = "doc-row-status";
-    status.textContent = STATUS_LABELS[statuses[index] ?? Status.Draft];
+      const date = document.createElement("span");
+      date.className = "doc-row-date";
+      date.textContent = formatUpdatedAt(doc.updatedAt);
 
-    row.append(main, status);
+      main.append(title, date);
 
-    row.addEventListener("click", () => openDoc(doc));
-    row.addEventListener("mouseenter", () => selectIndex(rows.indexOf(row)));
-    row.addEventListener("contextmenu", (event) => {
-      event.preventDefault();
-      selectIndex(rows.indexOf(row));
-      contextMenu.open(doc, event.clientX, event.clientY);
+      const statusLabel = document.createElement("span");
+      statusLabel.className = "doc-row-status";
+      statusLabel.setAttribute("role", "button");
+      statusLabel.textContent = STATUS_LABELS[status];
+      statusLabel.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const rect = statusLabel.getBoundingClientRect();
+        statusMenu.open(doc, status, rect.left, rect.bottom + 4);
+      });
+
+      row.append(main, statusLabel);
+
+      row.addEventListener("click", () => openDoc(doc));
+      row.addEventListener("mouseenter", () => selectIndex(rows.indexOf(row)));
+      row.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        selectIndex(rows.indexOf(row));
+        contextMenu.open(doc, event.clientX, event.clientY);
+      });
+
+      listEl.appendChild(row);
+      rows.push(row);
     });
 
-    listEl.appendChild(row);
-    rows.push(row);
-  });
-  selectIndex(0);
+    const restoredIndex = entries.findIndex((e) => e.doc.id === selectedId);
+    selectIndex(restoredIndex === -1 ? 0 : restoredIndex);
+  }
+
+  renderRows();
   listEl.focus();
 
   listEl.addEventListener("keydown", (event) => {
@@ -394,7 +517,7 @@ async function main(): Promise<void> {
         break;
       case "Enter": {
         event.preventDefault();
-        const doc = docs[selectedIndex];
+        const doc = entries[selectedIndex]?.doc;
         if (doc) {
           openDoc(doc);
         }
