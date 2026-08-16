@@ -131,19 +131,27 @@ async function getLocalText(id: string): Promise<Doc | null> {
   );
 }
 
-export async function getText(id: string): Promise<Doc | null> {
-  const local = await getLocalText(id);
-  if (local !== null) {
-    return local;
-  }
-
-  const res = await fetch(`/api/docs/${id}`);
-  if (!res.ok) {
+async function getRemoteText(id: string): Promise<Doc | null> {
+  try {
+    const res = await fetch(`/api/docs/${id}`);
+    if (!res.ok) {
+      return null;
+    }
+    return (await res.json()) as Doc;
+  } catch {
     return null;
   }
-  const doc = (await res.json()) as Doc;
-  await putText(id, doc);
-  return doc;
+}
+
+export async function getText(id: string): Promise<Doc | null> {
+  const [local, remote] = await Promise.all([getLocalText(id), getRemoteText(id)]);
+
+  if (remote !== null && (local === null || remote.updatedAt > local.updatedAt)) {
+    await putText(id, remote);
+    return remote;
+  }
+
+  return local;
 }
 
 export async function pushDoc(doc: Doc): Promise<void> {
