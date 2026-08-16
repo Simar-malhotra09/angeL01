@@ -18,3 +18,5 @@ That is it.
 
 Example: This blog: [Who needs a runtime?](https://simar-malhotra09.github.io/writing/documents/who-needs-a-runtime.html) was written using angel. 
 
+Update log: 
+[2026/Aug/16]: The wp is functionable as shown by the above link. Further major changes will be stated here. 
