@@ -18,15 +18,31 @@ export function getDocID(): string {
   return id;
 }
 
+export enum Status {
+  Draft,
+  Published,
+  Archived,
+}
+
+export const STATUS_LABELS: Record<Status, string> = {
+  [Status.Draft]: "Draft",
+  [Status.Published]: "Published",
+  [Status.Archived]: "Archived",
+};
+
 export interface Doc {
   id: string;
   title: string;
   content: string;
   createdAt: number;
   updatedAt: number;
+  status?: Status;
 }
 
-export type DocSummary = Pick<Doc, "id" | "title" | "createdAt" | "updatedAt">;
+export type DocSummary = Pick<
+  Doc,
+  "id" | "title" | "createdAt" | "updatedAt" | "status"
+>;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -49,23 +65,41 @@ function openDb(): Promise<IDBDatabase> {
   return dbPromise;
 }
 
-export async function putText(id: string, doc:Doc):Promise<void> {
-  const db = await openDb(); 
-  const res = new Promise<void>((resolve, reject)=> {
-    const tx = db.transaction(TEXT_STORE_NAME, "readwrite"); 
-    tx.objectStore(TEXT_STORE_NAME).put(doc, id); 
+export async function putText(id: string, doc: Doc): Promise<void> {
+  const db = await openDb();
+  const res = new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(TEXT_STORE_NAME, "readwrite");
+    tx.objectStore(TEXT_STORE_NAME).put(doc, id);
     tx.oncomplete = () => {
       resolve();
     };
     tx.onerror = () => {
       reject(tx.error);
     };
-
   });
-  return res; 
+  return res;
 }
 
-function getLocalText(id: string): Promise<Doc | null> {
+export async function getStatus(id: string): Promise<Status> {
+  return openDb().then(
+    (db) =>
+      new Promise<Status>((resolve, reject) => {
+        const tx = db.transaction(TEXT_STORE_NAME, "readonly");
+        const request = tx.objectStore(TEXT_STORE_NAME).get(id);
+
+        request.onsuccess = () => {
+          const doc = request.result as Doc | undefined;
+          resolve(doc?.status ?? Status.Draft);
+        };
+
+        request.onerror = () => {
+          reject(request.error);
+        };
+      }),
+  );
+}
+
+async function getLocalText(id: string): Promise<Doc | null> {
   return openDb().then(
     (db) =>
       new Promise<Doc | null>((resolve, reject) => {
@@ -102,7 +136,11 @@ export async function pushDoc(doc: Doc): Promise<void> {
   const res = await fetch(`/api/docs/${doc.id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title: doc.title, content: doc.content, createdAt: doc.createdAt }),
+    body: JSON.stringify({
+      title: doc.title,
+      content: doc.content,
+      createdAt: doc.createdAt,
+    }),
   });
   if (!res.ok) {
     throw new Error(`Failed to sync doc ${doc.id}: ${res.status}`);
