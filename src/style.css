@@ -418,20 +418,20 @@ body {
 
 .doc-sprite {
   position: absolute;
-  left: calc(50% - 15px);
   width: 30px;
   height: auto;
   cursor: grab;
   visibility: hidden;
   animation: doc-sprite-bounce 0.55s ease-in-out infinite;
-  transition: top 0.12s ease-out;
   touch-action: none;
 }
 
-.doc-sprite.is-dragging,
 .doc-sprite.is-floating {
+  z-index: 1000;
+}
+
+.doc-sprite.is-dragging {
   cursor: grabbing;
-  transition: none;
   z-index: 1000;
 }
 

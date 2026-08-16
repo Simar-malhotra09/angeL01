@@ -150,29 +150,8 @@ function createStatusMenu(onSelect: (doc: DocSummary, status: Status) => void): 
   return { open };
 }
 
-function getTableBounds(rows: HTMLButtonElement[]): DOMRect | null {
-  const firstRow = rows[0];
-  const lastRow = rows[rows.length - 1];
-  if (!firstRow || !lastRow) {
-    return null;
-  }
-  const first = firstRow.getBoundingClientRect();
-  const last = lastRow.getBoundingClientRect();
-  return new DOMRect(
-    Math.min(first.left, last.left),
-    first.top,
-    Math.max(first.right, last.right) - Math.min(first.left, last.left),
-    last.bottom - first.top,
-  );
-}
-
-function attachSpriteDrag(
-  spriteEl: HTMLElement,
-  rows: HTMLButtonElement[],
-  dock: () => void,
-): void {
+function attachSpriteFloat(spriteEl: HTMLElement, onClick: () => void): void {
   let isDragging = false;
-  let isFloating = false;
   let dragMoved = false;
   let dragOffsetX = 0;
   let dragOffsetY = 0;
@@ -185,7 +164,6 @@ function attachSpriteDrag(
   let floatRAF = 0;
 
   function stopFloating(): void {
-    isFloating = false;
     if (floatRAF) {
       cancelAnimationFrame(floatRAF);
       floatRAF = 0;
@@ -220,19 +198,19 @@ function attachSpriteDrag(
     floatRAF = requestAnimationFrame(floatStep);
   }
 
-  function startFloating(clientX: number, clientY: number): void {
-    isFloating = true;
+  function startFloating(centerX: number, centerY: number): void {
     spriteEl.classList.add("is-floating");
     spriteEl.style.position = "fixed";
+    spriteEl.style.visibility = "visible";
 
     const rect = spriteEl.getBoundingClientRect();
     floatX = Math.max(
       0,
-      Math.min(window.innerWidth - rect.width, clientX - dragOffsetX),
+      Math.min(window.innerWidth - rect.width, centerX - rect.width / 2),
     );
     floatY = Math.max(
       0,
-      Math.min(window.innerHeight - rect.height, clientY - dragOffsetY),
+      Math.min(window.innerHeight - rect.height, centerY - rect.height / 2),
     );
 
     const angle = Math.random() * Math.PI * 2;
@@ -243,20 +221,9 @@ function attachSpriteDrag(
     floatStep();
   }
 
-  function returnToDock(): void {
-    stopFloating();
-    spriteEl.classList.remove("is-floating", "is-dragging");
-    spriteEl.style.position = "";
-    spriteEl.style.left = "";
-    spriteEl.style.top = "";
-    dock();
-  }
-
   spriteEl.addEventListener("pointerdown", (event) => {
     event.preventDefault();
-    if (isFloating) {
-      stopFloating();
-    }
+    stopFloating();
 
     const rect = spriteEl.getBoundingClientRect();
     dragOffsetX = event.clientX - rect.left;
@@ -280,7 +247,6 @@ function attachSpriteDrag(
       const dy = event.clientY - dragStartClientY;
       if (Math.hypot(dx, dy) > 4) {
         dragMoved = true;
-        spriteEl.style.position = "fixed";
       }
     }
 
@@ -299,24 +265,13 @@ function attachSpriteDrag(
     spriteEl.classList.remove("is-dragging");
 
     if (!dragMoved) {
-      returnToDock();
-      return;
+      onClick();
     }
 
-    const tableBounds = getTableBounds(rows);
-    const draggedOut =
-      !tableBounds ||
-      event.clientX < tableBounds.left ||
-      event.clientX > tableBounds.right ||
-      event.clientY < tableBounds.top ||
-      event.clientY > tableBounds.bottom;
-
-    if (draggedOut) {
-      startFloating(event.clientX, event.clientY);
-    } else {
-      returnToDock();
-    }
+    startFloating(event.clientX, event.clientY);
   });
+
+  startFloating(window.innerWidth / 2, window.innerHeight / 2);
 }
 
 async function main(): Promise<void> {
@@ -332,6 +287,10 @@ async function main(): Promise<void> {
 
   newDocButton.addEventListener("click", () => {
     window.location.href = `/doc/${crypto.randomUUID()}`;
+  });
+
+  attachSpriteFloat(spriteEl, () => {
+    // TODO: sprite click behavior
   });
 
   const docs = await listDocs();
@@ -374,14 +333,7 @@ async function main(): Promise<void> {
     const row = rows[selectedIndex];
     row?.classList.add("is-selected");
     row?.scrollIntoView({ block: "nearest" });
-
-    if (row && spriteEl) {
-      spriteEl.style.visibility = "visible";
-      spriteEl.style.top = `${row.offsetTop + row.offsetHeight / 2 - spriteEl.offsetHeight / 2}px`;
-    }
   }
-
-  attachSpriteDrag(spriteEl, rows, () => selectIndex(selectedIndex));
 
   function removeDoc(doc: DocSummary): void {
     const index = entries.findIndex((e) => e.doc.id === doc.id);
