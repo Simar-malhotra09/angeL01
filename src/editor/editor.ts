@@ -126,7 +126,7 @@ export function createEditor(
     return true;
   });
 
-  function saveDoc(cm: { getValue: () => string }): Doc {
+  async function saveDoc(cm: { getValue: () => string }): Promise<Doc> {
     const docID = getDocID();
     const doc: Doc = {
       id: docID,
@@ -141,23 +141,29 @@ export function createEditor(
       bufferTimeout = null;
     }
 
-    putText(docID, doc);
-    void pushDoc(doc);
+    await putText(docID, doc);
+    try {
+      await pushDoc(doc);
+    } catch (error) {
+      console.error(`Failed to sync doc ${docID} to server; edit is still saved locally`, error);
+    }
     return doc;
   }
 
   Vim.defineEx("write", "w", (cm) => {
-    saveDoc(cm);
+    void saveDoc(cm);
   });
 
   Vim.defineEx("quit", "q", (cm) => {
-    saveDoc(cm);
-    window.location.href = "/";
+    void saveDoc(cm).then(() => {
+      window.location.href = "/";
+    });
   });
 
   Vim.defineEx("wq", "wq", (cm) => {
-    saveDoc(cm);
-    window.location.href = "/";
+    void saveDoc(cm).then(() => {
+      window.location.href = "/";
+    });
   });
 
   const extensions: Extension[] = [
