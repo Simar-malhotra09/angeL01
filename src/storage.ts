@@ -30,6 +30,12 @@ export const STATUS_LABELS: Record<Status, string> = {
   [Status.Archived]: "Archived",
 };
 
+export const ALL_STATUSES: Status[] = [
+  Status.Draft,
+  Status.Published,
+  Status.Archived,
+];
+
 export interface Doc {
   id: string;
   title: string;
@@ -97,6 +103,14 @@ export async function getStatus(id: string): Promise<Status> {
         };
       }),
   );
+}
+
+export async function setStatus(id: string, status: Status): Promise<void> {
+  const doc = await getText(id);
+  if (doc === null) {
+    throw new Error(`Cannot set status: document ${id} not found`);
+  }
+  await putText(id, { ...doc, status });
 }
 
 async function getLocalText(id: string): Promise<Doc | null> {
