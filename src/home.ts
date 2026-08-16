@@ -290,7 +290,7 @@ async function main(): Promise<void> {
   });
 
   attachSpriteFloat(spriteEl, () => {
-    // TODO: sprite click behavior
+    window.open("https://www.youtube.com/watch?v=nlLhw1mtCFA", "_blank");
   });
 
   const docs = await listDocs();
