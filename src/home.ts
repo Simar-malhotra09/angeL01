@@ -1,9 +1,19 @@
 import "./style.css";
-import { deleteDoc, listDocs, type DocSummary } from "./storage";
+import {
+  deleteDoc,
+  listDocs,
+  getStatus,
+  STATUS_LABELS,
+  Status,
+  type DocSummary,
+} from "./storage";
 import { stripInlineMarkdown } from "./markdown/markdown-to-html";
 
 function formatUpdatedAt(ts: number): string {
-  return new Date(ts).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  return new Date(ts).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
 function openDoc(doc: DocSummary): void {
@@ -32,14 +42,22 @@ function createDocContextMenu(onDelete: (doc: DocSummary) => void): {
   }
 
   deleteRow.addEventListener("click", () => {
-    if (target && confirm(`Delete "${target.title.trim() || "untitled"}"? This cannot be undone.`)) {
+    if (
+      target &&
+      confirm(
+        `Delete "${target.title.trim() || "untitled"}"? This cannot be undone.`,
+      )
+    ) {
       onDelete(target);
     }
     close();
   });
 
   document.addEventListener("mousedown", (event) => {
-    if (menu.classList.contains("is-open") && !menu.contains(event.target as Node)) {
+    if (
+      menu.classList.contains("is-open") &&
+      !menu.contains(event.target as Node)
+    ) {
       close();
     }
   });
@@ -78,7 +96,11 @@ function getTableBounds(rows: HTMLButtonElement[]): DOMRect | null {
   );
 }
 
-function attachSpriteDrag(spriteEl: HTMLElement, rows: HTMLButtonElement[], dock: () => void): void {
+function attachSpriteDrag(
+  spriteEl: HTMLElement,
+  rows: HTMLButtonElement[],
+  dock: () => void,
+): void {
   let isDragging = false;
   let isFloating = false;
   let dragMoved = false;
@@ -134,8 +156,14 @@ function attachSpriteDrag(spriteEl: HTMLElement, rows: HTMLButtonElement[], dock
     spriteEl.style.position = "fixed";
 
     const rect = spriteEl.getBoundingClientRect();
-    floatX = Math.max(0, Math.min(window.innerWidth - rect.width, clientX - dragOffsetX));
-    floatY = Math.max(0, Math.min(window.innerHeight - rect.height, clientY - dragOffsetY));
+    floatX = Math.max(
+      0,
+      Math.min(window.innerWidth - rect.width, clientX - dragOffsetX),
+    );
+    floatY = Math.max(
+      0,
+      Math.min(window.innerHeight - rect.height, clientY - dragOffsetY),
+    );
 
     const angle = Math.random() * Math.PI * 2;
     const speed = 0.6 + Math.random() * 0.9;
@@ -227,7 +255,9 @@ async function main(): Promise<void> {
   const spriteEl = document.getElementById("doc-sprite");
 
   if (!listEl || !newDocButton || !spriteEl) {
-    throw new Error("Missing required DOM mount points: #doc-list, #new-doc-button, and/or #doc-sprite");
+    throw new Error(
+      "Missing required DOM mount points: #doc-list, #new-doc-button, and/or #doc-sprite",
+    );
   }
 
   newDocButton.addEventListener("click", () => {
@@ -295,20 +325,33 @@ async function main(): Promise<void> {
       });
   });
 
-  docs.forEach((doc) => {
+  const statuses = await Promise.all(docs.map((doc) => getStatus(doc.id)));
+
+  docs.forEach((doc, index) => {
     const row = document.createElement("button");
     row.type = "button";
     row.className = "doc-row";
 
+    const main = document.createElement("div");
+    main.className = "doc-row-main";
+
     const title = document.createElement("span");
     title.className = "doc-row-title";
-    title.textContent = doc.title.trim().length > 0 ? stripInlineMarkdown(doc.title) : "untitled";
+    title.textContent =
+      doc.title.trim().length > 0 ? stripInlineMarkdown(doc.title) : "untitled";
 
     const date = document.createElement("span");
     date.className = "doc-row-date";
     date.textContent = formatUpdatedAt(doc.updatedAt);
 
-    row.append(title, date);
+    main.append(title, date);
+
+    const status = document.createElement("span");
+    status.className = "doc-row-status";
+    status.textContent = STATUS_LABELS[statuses[index] ?? Status.Draft];
+
+    row.append(main, status);
+
     row.addEventListener("click", () => openDoc(doc));
     row.addEventListener("mouseenter", () => selectIndex(rows.indexOf(row)));
     row.addEventListener("contextmenu", (event) => {
@@ -316,10 +359,10 @@ async function main(): Promise<void> {
       selectIndex(rows.indexOf(row));
       contextMenu.open(doc, event.clientX, event.clientY);
     });
+
     listEl.appendChild(row);
     rows.push(row);
   });
-
   selectIndex(0);
   listEl.focus();
 
