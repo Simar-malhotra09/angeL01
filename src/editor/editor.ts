@@ -7,7 +7,7 @@ import {
   scrollPastEnd,
   type ViewUpdate,
 } from "@codemirror/view";
-import { EditorState, type Extension } from "@codemirror/state";
+import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { search, searchKeymap } from "@codemirror/search";
 import { saveDraft, putText, pushDoc, type Doc } from "../storage";
@@ -31,6 +31,25 @@ import {
   type Highlight,
 } from "../highlights/highlight-field";
 import { putHighlightRecords } from "../highlights/highlight-store";
+
+type InputLang = "en" | "ja";
+
+const INPUT_LANG_ATTRIBUTES: Record<InputLang, Record<string, string>> = {
+  en: {
+    spellcheck: "true",
+    autocapitalize: "sentences",
+    lang: "en",
+  },
+  ja: {
+    spellcheck: "false",
+    autocapitalize: "none",
+    lang: "ja",
+  },
+};
+
+// Manual override for testing Japanese input. Either flip this to "ja",
+// or toggle live in the editor with Mod-Shift-l.
+const DEFAULT_INPUT_LANG: InputLang = "en";
 
 export interface EditorCallbacks {
   onChange: (text: string) => void;
@@ -72,6 +91,9 @@ export function createEditor(
   let highlightBufferTimeout: ReturnType<typeof setTimeout> | null = null;
 
   let dirty = false;
+
+  const inputLangCompartment = new Compartment();
+  let inputLang: InputLang = DEFAULT_INPUT_LANG;
 
   const changeListener = EditorView.updateListener.of((update) => {
     if (update.docChanged) {
@@ -211,6 +233,19 @@ export function createEditor(
           return true;
         },
       },
+      {
+        key: "Mod-Shift-l",
+        run: () => {
+          inputLang = inputLang === "en" ? "ja" : "en";
+          view.dispatch({
+            effects: inputLangCompartment.reconfigure(
+              EditorView.contentAttributes.of(INPUT_LANG_ATTRIBUTES[inputLang]),
+            ),
+          });
+          console.log(`Input language: ${inputLang}`);
+          return true;
+        },
+      },
     ]),
     keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
     placeholder("You mustn't run away..."),
@@ -272,11 +307,9 @@ export function createEditor(
         return true;
       }
     }),
-    EditorView.contentAttributes.of({
-      spellcheck: "true",
-      autocapitalize: "sentences",
-      lang: "en",
-    }),
+    inputLangCompartment.of(
+      EditorView.contentAttributes.of(INPUT_LANG_ATTRIBUTES[inputLang]),
+    ),
     EditorView.theme({ "&": { backgroundColor: "transparent" } }),
   ];
 
