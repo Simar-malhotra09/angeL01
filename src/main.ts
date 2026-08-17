@@ -1,6 +1,6 @@
 import "./style.css";
 import { createEditor } from "./editor/editor";
-import { getText, getDocID } from "./storage";
+import { getText, getDocID, Status } from "./storage";
 import { countWords, formatWordCount } from "./word-count";
 import { createToc, type Toc } from "./toc";
 import { exportDocumentAsHtml } from "./export";
@@ -66,22 +66,29 @@ async function main(): Promise<void> {
   let toc: Toc | null = null;
   let highlightSidebar: HighlightSidebar | null = null;
 
-  const view = createEditor(shell, initialDoc, initialHighlights, doc?.createdAt ?? Date.now(), {
-    onChange: (text) => {
-      wordCountEl.textContent = formatWordCount(countWords(text));
-      if (!titleIsExplicit) {
-        docTitleEl.value = titleFromContent(text) || "untitled";
-      }
+  const view = createEditor(
+    shell,
+    initialDoc,
+    initialHighlights,
+    doc?.createdAt ?? Date.now(),
+    doc?.status ?? Status.Draft,
+    {
+      onChange: (text) => {
+        wordCountEl.textContent = formatWordCount(countWords(text));
+        if (!titleIsExplicit) {
+          docTitleEl.value = titleFromContent(text) || "untitled";
+        }
+      },
+      onUpdate: () => {
+        toc?.update();
+        highlightSidebar?.update();
+      },
+      getTitle: () => {
+        const title = docTitleEl.value.trim();
+        return title.length > 0 ? title : "untitled";
+      },
     },
-    onUpdate: () => {
-      toc?.update();
-      highlightSidebar?.update();
-    },
-    getTitle: () => {
-      const title = docTitleEl.value.trim();
-      return title.length > 0 ? title : "untitled";
-    },
-  });
+  );
 
   toc = createToc(tocEl, view);
   highlightSidebar = createHighlightSidebar(highlightPanelEl, view);

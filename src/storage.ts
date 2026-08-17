@@ -110,7 +110,30 @@ export async function setStatus(id: string, status: Status): Promise<void> {
   if (doc === null) {
     throw new Error(`Cannot set status: document ${id} not found`);
   }
-  await putText(id, { ...doc, status });
+  const updated = { ...doc, status };
+  await putText(id, updated);
+  await pushDoc(updated, false);
+}
+
+/**
+ * Reconcile a document's status between the local cache (IndexedDB) and the
+ * durable store (SQLite). Non-draft statuses win; when both sides carry a
+ * non-draft status the durable store is authoritative. Disagreements are
+ * persisted to both stores on a best-effort basis.
+ */
+export async function reconcileStatus(
+  id: string,
+  serverStatus: Status | undefined,
+): Promise<Status> {
+  const localStatus = await getStatus(id);
+  const server = serverStatus ?? Status.Draft;
+  const resolved = server !== Status.Draft ? server : localStatus;
+  if (resolved !== server || resolved !== localStatus) {
+    await setStatus(id, resolved).catch(() => {
+      // Best-effort: if the sync fails, the local cache keeps its value.
+    });
+  }
+  return resolved;
 }
 
 async function getLocalText(id: string): Promise<Doc | null> {
@@ -153,8 +176,14 @@ export async function getText(id: string): Promise<Doc | null> {
     remote !== null &&
     (local === null || remote.updatedAt > local.updatedAt)
   ) {
-    await putText(id, remote);
-    return remote;
+    // Keep a locally-known status when the remote copy predates status
+    // support or was written by an older client.
+    const merged =
+      local !== null && local.status !== undefined && remote.status === undefined
+        ? { ...remote, status: local.status }
+        : remote;
+    await putText(id, merged);
+    return merged;
   }
 
   return local;
@@ -168,6 +197,7 @@ export async function pushDoc(doc: Doc, keepalive: boolean): Promise<void> {
       title: doc.title,
       content: doc.content,
       createdAt: doc.createdAt,
+      status: doc.status ?? Status.Draft,
     }),
     keepalive,
   });

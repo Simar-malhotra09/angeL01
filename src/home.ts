@@ -2,7 +2,7 @@ import "./style.css";
 import {
   deleteDoc,
   listDocs,
-  getStatus,
+  reconcileStatus,
   setStatus,
   STATUS_LABELS,
   ALL_STATUSES,
@@ -304,7 +304,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  const statuses = await Promise.all(docs.map((doc) => getStatus(doc.id)));
+  const statuses = await Promise.all(
+    docs.map((doc) => reconcileStatus(doc.id, doc.status)),
+  );
 
   interface Entry {
     doc: DocSummary;

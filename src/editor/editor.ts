@@ -10,7 +10,7 @@ import {
 import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { search, searchKeymap } from "@codemirror/search";
-import { saveDraft, putText, pushDoc, type Doc } from "../storage";
+import { saveDraft, putText, pushDoc, Status, type Doc } from "../storage";
 import { Vim, vim, getCM} from "@replit/codemirror-vim";
 import { resolveTypographyInsert } from "../markdown/smart-typography";
 import { urlHoverTooltip, findLinkAt } from "../tooltip/url-tooltip";
@@ -62,6 +62,7 @@ export function createEditor(
   initialDoc: string,
   initialHighlights: readonly Highlight[],
   createdAt: number,
+  initialStatus: Status,
   callbacks: EditorCallbacks,
 ): EditorView {
 
@@ -113,6 +114,7 @@ export function createEditor(
           content: text,
           createdAt,
           updatedAt: Date.now(),
+          status: initialStatus,
         });
       }, BUFFER_DEBOUNCE_MS);
 
@@ -129,6 +131,7 @@ export function createEditor(
             content: text,
             createdAt,
             updatedAt: Date.now(),
+            status: initialStatus,
           },
           false,
         ).catch((error: unknown) => {
@@ -183,6 +186,7 @@ export function createEditor(
       content: cm.getValue(),
       createdAt,
       updatedAt: Date.now(),
+      status: initialStatus,
     };
 
     if (bufferTimeout !== null) {
@@ -334,6 +338,7 @@ export function createEditor(
       content: view.state.doc.toString(),
       createdAt,
       updatedAt: Date.now(),
+      status: initialStatus,
     };
     putText(docID, doc);
     pushDoc(doc, true).catch((error: unknown) => {
