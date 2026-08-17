@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import home from "../index.html";
 import editor from "../editor.html";
-import type { Doc, DocSummary } from "./storage";
+import { Status, type Doc, type DocSummary } from "./storage";
 import { isSupportedImageType } from "./image/image-format";
 import { isValidId } from "./id";
 
@@ -13,9 +13,18 @@ db.exec(`
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL,
+    status INTEGER NOT NULL DEFAULT 0
   )
 `);
+
+// Non-destructive migration for databases created before the status column
+// existed. CREATE TABLE IF NOT EXISTS above won't add columns to an existing
+// table, so add the column explicitly when it is missing.
+const docColumns = db.query("PRAGMA table_info(docs)").all() as Array<{ name: string }>;
+if (!docColumns.some((column) => column.name === "status")) {
+  db.exec("ALTER TABLE docs ADD COLUMN status INTEGER NOT NULL DEFAULT 0");
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS images (
@@ -32,23 +41,25 @@ interface DocRow {
   content: string;
   created_at: number;
   updated_at: number;
+  status: Status;
 }
 
 type DocSummaryRow = Omit<DocRow, "content">;
 
-type DocWrite = Pick<Doc, "title" | "content" | "createdAt">;
+type DocWrite = Pick<Doc, "title" | "content" | "createdAt" | "status">;
 
 const getDocStmt = db.query<DocRow, [string]>("SELECT * FROM docs WHERE id = ?");
 const listDocsStmt = db.query<DocSummaryRow, []>(
-  "SELECT id, title, created_at, updated_at FROM docs ORDER BY updated_at DESC",
+  "SELECT id, title, created_at, updated_at, status FROM docs ORDER BY updated_at DESC",
 );
-const upsertDocStmt = db.query<null, [string, string, string, number, number]>(`
-  INSERT INTO docs (id, title, content, created_at, updated_at)
-  VALUES (?, ?, ?, ?, ?)
+const upsertDocStmt = db.query<null, [string, string, string, number, number, number]>(`
+  INSERT INTO docs (id, title, content, created_at, updated_at, status)
+  VALUES (?, ?, ?, ?, ?, ?)
   ON CONFLICT(id) DO UPDATE SET
     title = excluded.title,
     content = excluded.content,
-    updated_at = excluded.updated_at
+    updated_at = excluded.updated_at,
+    status = excluded.status
 `);
 const deleteDocStmt = db.query<null, [string]>("DELETE FROM docs WHERE id = ?");
 
@@ -74,6 +85,7 @@ function rowToDoc(row: DocRow): Doc {
     content: row.content,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    status: row.status,
   };
 }
 
@@ -83,6 +95,7 @@ function rowToDocSummary(row: DocSummaryRow): DocSummary {
     title: row.title,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    status: row.status,
   };
 }
 
@@ -109,7 +122,11 @@ const server = Bun.serve({
         }
         const body = (await req.json()) as DocWrite;
         const now = Date.now();
-        upsertDocStmt.run(req.params.id, body.title, body.content, body.createdAt, now);
+        // Preserve the stored status when an older client omits it, so a
+        // content-only save never resets a document back to Draft.
+        const existing = getDocStmt.get(req.params.id);
+        const status = body.status ?? existing?.status ?? Status.Draft;
+        upsertDocStmt.run(req.params.id, body.title, body.content, body.createdAt, now, status);
         return Response.json({ ok: true });
       },
       DELETE: (req) => {
