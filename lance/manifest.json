@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "MD Link Copy",
+  "version": "1.0.0",
+  "description": "Copies the selected text as a markdown link: [selection](url). Uses the selection's own link if it's inside one, otherwise the page URL.",
+  "permissions": ["activeTab", "scripting"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "copy-as-markdown-link": {
+      "suggested_key": {
+        "default": "Alt+C"
+      },
+      "description": "Copy selection as [text](link)"
+    }
+  }
+}
