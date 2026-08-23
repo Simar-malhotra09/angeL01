@@ -7,7 +7,10 @@ import { exportDocumentAsHtml } from "./export";
 import { parseHeading } from "./markdown/headings";
 import { stripInlineMarkdown } from "./markdown/markdown-to-html";
 import { getHighlightRecords } from "./highlights/highlight-store";
-import { createHighlightSidebar, type HighlightSidebar } from "./highlights/highlight-sidebar";
+import {
+  createHighlightSidebar,
+  type HighlightSidebar,
+} from "./highlights/highlight-sidebar";
 
 function titleFromContent(content: string): string {
   const firstLine = content.split("\n").find((line) => line.trim().length > 0);
@@ -49,9 +52,11 @@ async function main(): Promise<void> {
 
   const savedTitle = doc?.title?.trim() ?? "";
   const autoTitle = titleFromContent(initialDoc);
-  let titleIsExplicit = savedTitle.length > 0 && savedTitle !== (autoTitle || "untitled");
+  let titleIsExplicit =
+    savedTitle.length > 0 && savedTitle !== (autoTitle || "untitled");
 
-  docTitleEl.value = savedTitle.length > 0 ? savedTitle : autoTitle || "untitled";
+  docTitleEl.value =
+    savedTitle.length > 0 ? savedTitle : autoTitle || "untitled";
 
   docTitleEl.addEventListener("input", () => {
     titleIsExplicit = true;
@@ -79,9 +84,18 @@ async function main(): Promise<void> {
           docTitleEl.value = titleFromContent(text) || "untitled";
         }
       },
-      onUpdate: () => {
+      onUpdate: (update) => {
         toc?.update();
         highlightSidebar?.update();
+        if (update.selectionSet) {
+          const { state } = update;
+          for (const range of state.selection.ranges) {
+            console.log(
+              "count: ",
+              countWords(state.sliceDoc(range.from, range.to)),
+            );
+          }
+        }
       },
       getTitle: () => {
         const title = docTitleEl.value.trim();
