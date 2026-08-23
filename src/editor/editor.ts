@@ -11,7 +11,7 @@ import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { search, searchKeymap } from "@codemirror/search";
 import { saveDraft, putText, pushDoc, Status, type Doc } from "../storage";
-import { Vim, vim, getCM} from "@replit/codemirror-vim";
+import { Vim, vim, getCM } from "@replit/codemirror-vim";
 import { resolveTypographyInsert } from "../markdown/smart-typography";
 import { urlHoverTooltip, findLinkAt } from "../tooltip/url-tooltip";
 import { markdownDecorations } from "./formatting-decorations";
@@ -65,7 +65,6 @@ export function createEditor(
   initialStatus: Status,
   callbacks: EditorCallbacks,
 ): EditorView {
-
   const fileInput = document.createElement("input");
   fileInput.type = "file";
   fileInput.accept = IMAGE_FILE_ACCEPT;
@@ -142,7 +141,8 @@ export function createEditor(
     }
 
     const highlightsTouched =
-      update.docChanged || update.transactions.some((tr) => hasHighlightEffect(tr.effects));
+      update.docChanged ||
+      update.transactions.some((tr) => hasHighlightEffect(tr.effects));
     if (highlightsTouched) {
       if (highlightBufferTimeout !== null) {
         clearTimeout(highlightBufferTimeout);
@@ -161,22 +161,28 @@ export function createEditor(
     }
   });
 
-  const smartTypographyHandler = EditorView.inputHandler.of((view, from, to, text) => {
-    if (from !== to || text.length !== 1) {
-      return false;
-    }
-    const docBefore = view.state.doc.sliceString(0, from);
-    const replacement = resolveTypographyInsert(docBefore, from, text);
-    if (replacement === null) {
-      return false;
-    }
-    view.dispatch({
-      changes: { from: replacement.from, to: replacement.to, insert: replacement.text },
-      selection: { anchor: replacement.from + replacement.text.length },
-      userEvent: "input.type",
-    });
-    return true;
-  });
+  const smartTypographyHandler = EditorView.inputHandler.of(
+    (view, from, to, text) => {
+      if (from !== to || text.length !== 1) {
+        return false;
+      }
+      const docBefore = view.state.doc.sliceString(0, from);
+      const replacement = resolveTypographyInsert(docBefore, from, text);
+      if (replacement === null) {
+        return false;
+      }
+      view.dispatch({
+        changes: {
+          from: replacement.from,
+          to: replacement.to,
+          insert: replacement.text,
+        },
+        selection: { anchor: replacement.from + replacement.text.length },
+        userEvent: "input.type",
+      });
+      return true;
+    },
+  );
 
   async function saveDoc(cm: { getValue: () => string }): Promise<Doc> {
     const docID = getDocID();
@@ -203,7 +209,10 @@ export function createEditor(
     try {
       await pushDoc(doc, false);
     } catch (error) {
-      console.error(`Failed to sync doc ${docID} to server; edit is still saved locally`, error);
+      console.error(
+        `Failed to sync doc ${docID} to server; edit is still saved locally`,
+        error,
+      );
       dirty = true;
     }
     return doc;
@@ -229,7 +238,10 @@ export function createEditor(
     vim(),
     history(),
     keymap.of([
-      ...paletteCommands.map((command) => ({ key: command.keys, run: command.run })),
+      ...paletteCommands.map((command) => ({
+        key: command.keys,
+        run: command.run,
+      })),
       {
         key: "Mod-Shift-p",
         run: () => {
@@ -293,7 +305,8 @@ export function createEditor(
       },
       click: (event, view) => {
         const vimState = getCM(view)?.state.vim;
-        const inNormalMode = !vimState || (!vimState.insertMode && !vimState.visualMode);
+        const inNormalMode =
+          !vimState || (!vimState.insertMode && !vimState.visualMode);
         if (!inNormalMode) {
           return false;
         }
@@ -309,7 +322,7 @@ export function createEditor(
         event.preventDefault();
         window.open(link.url, "_blank", "noopener,noreferrer");
         return true;
-      }
+      },
     }),
     inputLangCompartment.of(
       EditorView.contentAttributes.of(INPUT_LANG_ATTRIBUTES[inputLang]),
