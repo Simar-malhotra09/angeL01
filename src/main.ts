@@ -90,10 +90,11 @@ async function main(): Promise<void> {
         if (update.selectionSet) {
           const { state } = update;
           for (const range of state.selection.ranges) {
-            console.log(
-              "count: ",
-              countWords(state.sliceDoc(range.from, range.to)),
-            );
+            const count =
+              range.from === range.to
+                ? countWords(state.doc.toString())
+                : countWords(state.sliceDoc(range.from, range.to));
+            wordCountEl.textContent = formatWordCount(count);
           }
         }
       },
