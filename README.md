@@ -35,3 +35,4 @@ TODO:
 - [ ] For highlights, add a label for notes as well, where the card doesn't contain the selected text but user notes about it.
 - [ ] For highlights, add a stickly vs floating (the current/def behaviour). Sticky will show as many card as can be fit in the current view.
 - [ ] UI oh god the UI; where is your taste?
+- [ ] Can we add, at the minimum, basic typst functionality?
