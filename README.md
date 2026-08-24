@@ -29,5 +29,7 @@ Update log:
 
 TODO:
 
+- Bugs:
+  - [ ] Highlights keeps capturing the selected text if the text has nothing in front of it. [textA][textB][highlight textA] works fine, but [textA][highlight textA][textB] captures [textB] as well.
 - [ ] Add single line occupying bold text as toggle in navbar.
 - [ ] UI oh god the UI; where is your taste?
