@@ -26,3 +26,8 @@ Update log:
 [2026/Aug/17]: Support japenese. You must see [pr #7 comments](https://github.com/Simar-malhotra09/angeL01/pull/7) first to be able to use it!
 
 [2026/Aug/16]: The wp is functionable as shown by the above link. Further major changes will be stated here.
+
+TODO:
+
+- [ ] Add single line occupying bold text as toggle in navbar.
+- [ ] UI oh god the UI; where is your taste?
