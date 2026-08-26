@@ -8,7 +8,12 @@ import {
   type ViewUpdate,
 } from "@codemirror/view";
 import { Compartment, EditorState, type Extension } from "@codemirror/state";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+} from "@codemirror/commands";
 import { search, searchKeymap } from "@codemirror/search";
 import { saveDraft, putText, pushDoc, Status, type Doc } from "../storage";
 import { Vim, vim, getCM } from "@replit/codemirror-vim";
@@ -263,7 +268,12 @@ export function createEditor(
         },
       },
     ]),
-    keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap]),
+    keymap.of([
+      ...defaultKeymap,
+      ...historyKeymap,
+      ...searchKeymap,
+      indentWithTab,
+    ]),
     placeholder("You mustn't run away..."),
     EditorView.lineWrapping,
     changeListener,
