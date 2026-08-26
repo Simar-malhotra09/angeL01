@@ -1,4 +1,13 @@
-import { RangeSet, RangeSetBuilder, RangeValue, StateEffect, StateField, type EditorState } from "@codemirror/state";
+import {
+  RangeSet,
+  RangeSetBuilder,
+  RangeValue,
+  StateEffect,
+  StateField,
+  type ChangeDesc,
+  type EditorState,
+  type Range,
+} from "@codemirror/state";
 import { Decoration, EditorView, type DecorationSet } from "@codemirror/view";
 import type { BucketId } from "./buckets";
 
@@ -35,12 +44,29 @@ export const addHighlightEffect = StateEffect.define<Highlight>();
 export const removeHighlightEffect = StateEffect.define<string>();
 export const loadHighlightsEffect = StateEffect.define<readonly Highlight[]>();
 
+function mapMarksThrough(marks: RangeSet<HighlightMark>, changes: ChangeDesc): RangeSet<HighlightMark> {
+  if (changes.empty) {
+    return marks;
+  }
+  const mapped: Range<HighlightMark>[] = [];
+  const cursor = marks.iter();
+  while (cursor.value) {
+    const from = changes.mapPos(cursor.from, 1);
+    const to = changes.mapPos(cursor.to, -1);
+    if (from < to) {
+      mapped.push(cursor.value.range(from, to));
+    }
+    cursor.next();
+  }
+  return RangeSet.of(mapped, true);
+}
+
 export const highlightField = StateField.define<RangeSet<HighlightMark>>({
   create() {
     return RangeSet.empty;
   },
   update(marks, tr) {
-    let next = marks.map(tr.changes);
+    let next = mapMarksThrough(marks, tr.changes);
     for (const effect of tr.effects) {
       if (effect.is(addHighlightEffect)) {
         next = next.update({ add: [toRange(effect.value)] });
@@ -88,7 +114,7 @@ export function getHighlights(state: EditorState): Highlight[] {
 }
 
 export function findHighlightAt(state: EditorState, pos: number): Highlight | null {
-  return getHighlights(state).find((highlight) => highlight.from <= pos && pos <= highlight.to) ?? null;
+  return getHighlights(state).find((highlight) => highlight.from <= pos && pos < highlight.to) ?? null;
 }
 
 export function hasHighlightEffect(effects: readonly StateEffect<unknown>[]): boolean {
