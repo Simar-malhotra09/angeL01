@@ -31,6 +31,7 @@ TODO:
 
 - Bugs:
   - [ ] Highlights keeps capturing the selected text if the text has nothing in front of it. [textA][textB][highlight textA] works fine, but [textA][highlight textA][textB] captures [textB] as well.
+  - [ ] Styling with `*/**`: currently we can't style word with italics if it's a part of a bold sentence, ie, ** this is a _italicized_ word doesn't work**.
 - [ ] Add single line occupying bold text as toggle in navbar.
 - [ ] For highlights, add a label for notes as well, where the card doesn't contain the selected text but user notes about it.
 - [ ] For highlights, add a stickly vs floating (the current/def behaviour). Sticky will show as many card as can be fit in the current view.
