@@ -31,7 +31,7 @@ TODO:
 
 - Bugs:
   - [ ] Highlights keeps capturing the selected text if the text has nothing in front of it. [textA][textB][highlight textA] works fine, but [textA][highlight textA][textB] captures [textB] as well.
-  - [ ] Styling with `*/**`: currently we can't style word with italics if it's a part of a bold sentence, ie, ** this is a _italicized_ word doesn't work**.
+  - [x] Styling with `*/**`: currently we can't style word with italics if it's a part of a bold sentence, ie, ** this is a _italicized_ word doesn't work**.
 - [ ] Add single line occupying bold text as toggle in navbar.
 - [x] Add indents with <tab>
 - [ ] Be able to dynamically change the width of the page through a bottom floating sleek horizonatal scrollbar? Max/Min?

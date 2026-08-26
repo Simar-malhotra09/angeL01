@@ -14,8 +14,9 @@ export interface RenderedMarkdown {
   headings: TocHeading[];
 }
 
-const BOLD_RE = /\*\*([^\n*]+)\*\*/g;
+const BOLD_RE = /\*\*(.+?)\*\*/g;
 const ITALIC_RE = /(?<!\*)\*([^\n*]+)\*(?!\*)/g;
+const UNDERSCORE_ITALIC_RE = /(?<!\w)_([^\n_]+)_(?!\w)/g;
 const IMAGE_RE = /!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)/g;
 const BLOCK_IMAGE_RE = /^!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)$/;
 const BARE_URL_RE = /https?:\/\/[^\s]+/g;
@@ -76,7 +77,8 @@ export function stripInlineMarkdown(text: string): string {
     .replace(IMAGE_RE, (_match, label: string) => label)
     .replace(LINK_RE, (_match, label: string) => label)
     .replace(BOLD_RE, (_match, inner: string) => inner)
-    .replace(ITALIC_RE, (_match, inner: string) => inner);
+    .replace(ITALIC_RE, (_match, inner: string) => inner)
+    .replace(UNDERSCORE_ITALIC_RE, (_match, inner: string) => inner);
 }
 
 function collectInlineSpans(lineText: string, resolveImage: ImageResolver): InlineSpan[] {
@@ -106,7 +108,7 @@ function collectInlineSpans(lineText: string, resolveImage: ImageResolver): Inli
     candidates.push({
       from: match.index,
       to: match.index + match[0].length,
-      html: `<strong>${escapeHtml(match[1]!)}</strong>`,
+      html: `<strong>${renderLineInline(match[1]!, resolveImage)}</strong>`,
     });
   }
 
@@ -115,7 +117,16 @@ function collectInlineSpans(lineText: string, resolveImage: ImageResolver): Inli
     candidates.push({
       from: match.index,
       to: match.index + match[0].length,
-      html: `<em>${escapeHtml(match[1]!)}</em>`,
+      html: `<em>${renderLineInline(match[1]!, resolveImage)}</em>`,
+    });
+  }
+
+  UNDERSCORE_ITALIC_RE.lastIndex = 0;
+  while ((match = UNDERSCORE_ITALIC_RE.exec(lineText)) !== null) {
+    candidates.push({
+      from: match.index,
+      to: match.index + match[0].length,
+      html: `<em>${renderLineInline(match[1]!, resolveImage)}</em>`,
     });
   }
 

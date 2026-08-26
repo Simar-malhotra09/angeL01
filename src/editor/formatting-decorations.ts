@@ -19,8 +19,14 @@ const headingLineDeco = [1, 2, 3].map((level) =>
   Decoration.line({ class: `cm-md-heading-${level}` }),
 );
 
-const BOLD_RE = /\*\*([^\n*]+)\*\*/g;
+const BOLD_RE = /\*\*(.+?)\*\*/g;
 const ITALIC_RE = /(?<!\*)\*([^\n*]+)\*(?!\*)/g;
+const UNDERSCORE_ITALIC_RE = /(?<!\w)_([^\n_]+)_(?!\w)/g;
+
+function normalizeUnderscoreItalics(lineText: string): string {
+  UNDERSCORE_ITALIC_RE.lastIndex = 0;
+  return lineText.replace(UNDERSCORE_ITALIC_RE, (_match, inner: string) => `*${inner}*`);
+}
 const IMAGE_RE = /!\[([^\]]*)\]\(image:[a-zA-Z0-9-]+\)/g;
 
 interface DecoSpec {
@@ -71,8 +77,9 @@ function collectLineSpecs(
     );
   }
 
+  const italicSource = normalizeUnderscoreItalics(lineText);
   ITALIC_RE.lastIndex = 0;
-  while ((match = ITALIC_RE.exec(lineText)) !== null) {
+  while ((match = ITALIC_RE.exec(italicSource)) !== null) {
     const start = lineFrom + match.index;
     const innerStart = start + 1;
     const innerEnd = innerStart + match[1]!.length;
