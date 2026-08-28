@@ -1,14 +1,28 @@
 import { EditorSelection } from "@codemirror/state";
 import type { Command } from "@codemirror/view";
-import { toggleBold, toggleItalic, makeToggleHeading, insertLink } from "./formatting-commands";
+import {
+  toggleBold,
+  toggleItalic,
+  makeToggleHeading,
+  insertLink,
+} from "./formatting-commands";
 import { BUCKETS, type BucketId } from "../highlights/buckets";
-import { addHighlightEffect, findHighlightAt, removeHighlightEffect } from "../highlights/highlight-field";
+import {
+  addHighlightEffect,
+  findHighlightAt,
+  removeHighlightEffect,
+} from "../highlights/highlight-field";
 
 export interface PaletteCommand {
   id: string;
   label: string;
   keys: string;
   run: Command;
+}
+
+export interface PaletteTab {
+  label: string;
+  commands: PaletteCommand[];
 }
 
 function highlightSelection(bucket: BucketId): Command {
@@ -49,18 +63,45 @@ function highlightPaletteCommands(): PaletteCommand[] {
   }));
   return [
     ...bucketCommands,
-    { id: "highlight-remove", label: "Remove Highlight", keys: "Mod-Alt-Shift-0", run: removeHighlight },
+    {
+      id: "highlight-remove",
+      label: "Remove Highlight",
+      keys: "Mod-Alt-Shift-0",
+      run: removeHighlight,
+    },
   ];
 }
 
-export function createPaletteCommands(fileInput: HTMLInputElement): PaletteCommand[] {
+export function createPaletteCommands(
+  fileInput: HTMLInputElement,
+): (PaletteCommand | PaletteTab)[] {
   return [
     { id: "bold", label: "Bold", keys: "Mod-b", run: toggleBold },
     { id: "italic", label: "Italic", keys: "Mod-i", run: toggleItalic },
-    { id: "heading-1", label: "Heading 1", keys: "Mod-Alt-1", run: makeToggleHeading(1) },
-    { id: "heading-2", label: "Heading 2", keys: "Mod-Alt-2", run: makeToggleHeading(2) },
-    { id: "heading-3", label: "Heading 3", keys: "Mod-Alt-3", run: makeToggleHeading(3) },
-    { id: "insert-link", label: "Insert Link", keys: "Mod-Alt-k", run: insertLink },
+    {
+      id: "heading-1",
+      label: "Heading 1",
+      keys: "Mod-Alt-1",
+      run: makeToggleHeading(1),
+    },
+    {
+      id: "heading-2",
+      label: "Heading 2",
+      keys: "Mod-Alt-2",
+      run: makeToggleHeading(2),
+    },
+    {
+      id: "heading-3",
+      label: "Heading 3",
+      keys: "Mod-Alt-3",
+      run: makeToggleHeading(3),
+    },
+    {
+      id: "insert-link",
+      label: "Insert Link",
+      keys: "Mod-Alt-k",
+      run: insertLink,
+    },
     {
       id: "insert-image",
       label: "Insert Image",
@@ -70,6 +111,6 @@ export function createPaletteCommands(fileInput: HTMLInputElement): PaletteComma
         return true;
       },
     },
-    ...highlightPaletteCommands(),
+    { label: "Highlights", commands: highlightPaletteCommands() },
   ];
 }

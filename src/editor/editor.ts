@@ -25,7 +25,7 @@ import { imageEmbed } from "./image-embed";
 import { insertImageFile } from "../image/image-insert";
 import { getDocID } from "../storage";
 import { isSupportedImageType, IMAGE_FILE_ACCEPT } from "../image/image-format";
-import { createPaletteCommands } from "./commands";
+import { createPaletteCommands, PaletteCommand } from "./commands";
 import { createCommandPalette, type CommandPalette } from "./command-palette";
 import {
   getHighlights,
@@ -84,7 +84,10 @@ export function createEditor(
     }
   });
 
-  const paletteCommands = createPaletteCommands(fileInput);
+  const paletteEntries = createPaletteCommands(fileInput);
+  const allPaletteCommands: PaletteCommand[] = paletteEntries.flatMap((entry) =>
+    "commands" in entry ? entry.commands : [entry],
+  );
   let palette: CommandPalette | null = null;
 
   let bufferTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -243,7 +246,7 @@ export function createEditor(
     vim(),
     history(),
     keymap.of([
-      ...paletteCommands.map((command) => ({
+      ...allPaletteCommands.map((command) => ({
         key: command.keys,
         run: command.run,
       })),
@@ -343,7 +346,7 @@ export function createEditor(
   const state = EditorState.create({ doc: initialDoc, extensions });
 
   const view = new EditorView({ state, parent });
-  palette = createCommandPalette(view, paletteCommands);
+  palette = createCommandPalette(view, paletteEntries);
 
   if (initialHighlights.length > 0) {
     view.dispatch({ effects: loadHighlightsEffect.of(initialHighlights) });
