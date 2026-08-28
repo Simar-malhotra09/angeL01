@@ -43,4 +43,4 @@ TODO:
 - [ ] Enclosing text with custom char: Basically, select text in visual mode + hotkey + left side char + right side char. Eg: text -> (text)
 - [ ] UI oh god the UI; where is your taste?
 - [ ] Can we add, at the minimum, basic typst functionality?
-- [ ] Use a port naming utility
+- [ ] Being able to write romaji underneath japanese text.
