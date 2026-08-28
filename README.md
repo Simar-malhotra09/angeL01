@@ -21,6 +21,8 @@ Example: This blog: [Who needs a runtime?](https://simar-malhotra09.github.io/wr
 
 Update log:
 
+[2026/Aug/27]: Added tabs in command palette. Group similar commands and essentially paginate them on main tab by that group + orphan commands.
+
 [2026/Aug/22]: Added lance chrome extension. Super useful if you are using a lot of links; please see `lance/README.md`!
 
 [2026/Aug/17]: Support japenese. You must see [pr #7 comments](https://github.com/Simar-malhotra09/angeL01/pull/7) first to be able to use it!
