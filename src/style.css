@@ -383,6 +383,12 @@ body {
   color: var(--faint);
 }
 
+.command-palette-row-tab .command-palette-keys {
+  color: var(--accent);
+  font-size: 15px;
+  padding-right: 4px;
+}
+
 #new-doc-button {
   position: fixed;
   top: 0;

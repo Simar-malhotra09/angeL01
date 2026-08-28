@@ -1,0 +1,6 @@
+[parse_single_output]: line:./main.ts:3:import { loadDraft, loadTitle, saveTitle, getText, getDocID} from "./storage";
+ match: 63 to 71, and is getDocID
+[parse_single_output]: line:./main.ts:22:  const id = getDocID();
+ match: 26 to 34, and is getDocID
+[parse_single_output]: line:./storage.ts:13:export function getDocID(): string {
+ match: 32 to 40, and is getDocID

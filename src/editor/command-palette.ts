@@ -1,5 +1,5 @@
 import type { EditorView } from "@codemirror/view";
-import type { PaletteCommand } from "./commands";
+import type { PaletteCommand, PaletteTab } from "./commands";
 
 const MAC_MODIFIER_SYMBOLS: Record<string, string> = {
   Mod: "⌘",
@@ -15,25 +15,47 @@ const OTHER_MODIFIER_NAMES: Record<string, string> = {
   Ctrl: "Ctrl",
 };
 
-const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+const isMac =
+  typeof navigator !== "undefined" &&
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform);
 
 function formatKeyLabel(keys: string): string {
   const parts = keys.split("-");
   const key = parts.pop() ?? "";
   if (isMac) {
-    return [...parts.map((mod) => MAC_MODIFIER_SYMBOLS[mod] ?? mod), key.toUpperCase()].join("");
+    return [
+      ...parts.map((mod) => MAC_MODIFIER_SYMBOLS[mod] ?? mod),
+      key.toUpperCase(),
+    ].join("");
   }
-  return [...parts.map((mod) => OTHER_MODIFIER_NAMES[mod] ?? mod), key.toUpperCase()].join("+");
+  return [
+    ...parts.map((mod) => OTHER_MODIFIER_NAMES[mod] ?? mod),
+    key.toUpperCase(),
+  ].join("+");
 }
 
 export interface CommandPalette {
   toggle: () => void;
 }
 
-export function createCommandPalette(view: EditorView, commands: PaletteCommand[]): CommandPalette {
+type PaletteEntry = PaletteCommand | PaletteTab;
+
+type CommandRow = { kind: "command"; command: PaletteCommand };
+type TabRow = { kind: "tab"; tab: PaletteTab };
+type Row = CommandRow | TabRow;
+
+export function createCommandPalette(
+  view: EditorView,
+  entries: PaletteEntry[],
+): CommandPalette {
   let isOpen = false;
   let selectedIndex = 0;
   let pendingG = false;
+  let activeTab: PaletteTab | null = null;
+  let mainSelectedIndex = 0;
+
+  let rows: HTMLButtonElement[] = [];
+  let currentRows: Row[] = [];
 
   const overlay = document.createElement("div");
   overlay.className = "command-palette-overlay";
@@ -43,12 +65,64 @@ export function createCommandPalette(view: EditorView, commands: PaletteCommand[
   panel.tabIndex = -1;
   overlay.appendChild(panel);
 
-  const rows: HTMLButtonElement[] = [];
+  function items(): Row[] {
+    if (activeTab !== null) {
+      return activeTab.commands.map((command) => ({
+        kind: "command",
+        command,
+      }));
+    }
+    return entries.map((entry): Row =>
+      "commands" in entry
+        ? { kind: "tab", tab: entry }
+        : { kind: "command", command: entry },
+    );
+  }
+
+  function render(): void {
+    panel.replaceChildren();
+    currentRows = items();
+    const rowElements: HTMLButtonElement[] = [];
+
+    currentRows.forEach((item, index) => {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "command-palette-row";
+      if (item.kind === "tab") {
+        row.classList.add("command-palette-row-tab");
+      }
+
+      const label = document.createElement("span");
+      label.className = "command-palette-label";
+      label.textContent =
+        item.kind === "tab" ? item.tab.label : item.command.label;
+
+      const keys = document.createElement("span");
+      keys.className = "command-palette-keys";
+      keys.textContent =
+        item.kind === "tab" ? "↗" : formatKeyLabel(item.command.keys);
+
+      row.append(label, keys);
+      row.addEventListener("click", () => activate(item));
+      row.addEventListener("mouseenter", () => selectIndex(index));
+      panel.appendChild(row);
+      rowElements.push(row);
+    });
+
+    rows = rowElements;
+  }
 
   function selectIndex(index: number): void {
-    const clamped = Math.max(0, Math.min(commands.length - 1, index));
+    const clamped = Math.max(0, Math.min(currentRows.length - 1, index));
     rows[selectedIndex]?.classList.remove("is-selected");
     selectedIndex = clamped;
+    rows[selectedIndex]?.classList.add("is-selected");
+    rows[selectedIndex]?.scrollIntoView({ block: "nearest" });
+  }
+
+  function renderSelect(index: number): void {
+    render();
+    selectedIndex = Math.max(0, Math.min(currentRows.length - 1, index));
     rows[selectedIndex]?.classList.add("is-selected");
     rows[selectedIndex]?.scrollIntoView({ block: "nearest" });
   }
@@ -62,37 +136,33 @@ export function createCommandPalette(view: EditorView, commands: PaletteCommand[
     isOpen = true;
     pendingG = false;
     overlay.classList.add("is-open");
-    rows.forEach((row) => row.classList.remove("is-selected"));
-    selectedIndex = 0;
-    rows[0]?.classList.add("is-selected");
+    activeTab = null;
+    renderSelect(0);
     panel.focus();
   }
 
-  function activate(command: PaletteCommand): void {
-    hide();
-    view.focus();
-    command.run(view);
+  function openTab(tab: PaletteTab): void {
+    mainSelectedIndex = selectedIndex;
+    activeTab = tab;
+    renderSelect(0);
+    panel.focus();
   }
 
-  commands.forEach((command, index) => {
-    const row = document.createElement("button");
-    row.type = "button";
-    row.className = "command-palette-row";
+  function backToMain(): void {
+    activeTab = null;
+    renderSelect(mainSelectedIndex);
+    panel.focus();
+  }
 
-    const label = document.createElement("span");
-    label.className = "command-palette-label";
-    label.textContent = command.label;
-
-    const keys = document.createElement("span");
-    keys.className = "command-palette-keys";
-    keys.textContent = formatKeyLabel(command.keys);
-
-    row.append(label, keys);
-    row.addEventListener("click", () => activate(command));
-    row.addEventListener("mouseenter", () => selectIndex(index));
-    panel.appendChild(row);
-    rows.push(row);
-  });
+  function activate(item: Row): void {
+    if (item.kind === "tab") {
+      openTab(item.tab);
+      return;
+    }
+    hide();
+    view.focus();
+    item.command.run(view);
+  }
 
   overlay.addEventListener("mousedown", (event) => {
     if (event.target === overlay) {
@@ -102,6 +172,21 @@ export function createCommandPalette(view: EditorView, commands: PaletteCommand[
   });
 
   panel.addEventListener("keydown", (event) => {
+    if (event.key === "Tab") {
+      event.preventDefault();
+      if (event.shiftKey) {
+        if (activeTab !== null) {
+          backToMain();
+        }
+      } else {
+        const item = currentRows[selectedIndex];
+        if (item?.kind === "tab") {
+          openTab(item.tab);
+        }
+      }
+      return;
+    }
+
     if (event.key === "g") {
       event.preventDefault();
       if (pendingG) {
@@ -125,26 +210,31 @@ export function createCommandPalette(view: EditorView, commands: PaletteCommand[
         break;
       case "G":
         event.preventDefault();
-        selectIndex(commands.length - 1);
+        selectIndex(currentRows.length - 1);
         break;
       case "Enter": {
         event.preventDefault();
-        const command = commands[selectedIndex];
-        if (command) {
-          activate(command);
+        const item = currentRows[selectedIndex];
+        if (item) {
+          activate(item);
         }
         break;
       }
       case "Escape":
         event.preventDefault();
-        hide();
-        view.focus();
+        if (activeTab !== null) {
+          backToMain();
+        } else {
+          hide();
+          view.focus();
+        }
         break;
       default:
         break;
     }
   });
 
+  render();
   document.body.appendChild(overlay);
 
   function toggle(): void {
