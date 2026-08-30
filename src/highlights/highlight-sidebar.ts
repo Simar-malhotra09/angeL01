@@ -1,7 +1,12 @@
 import { EditorSelection } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
 import { bucketLabel } from "./buckets";
-import { getHighlights, removeHighlightEffect, type Highlight } from "./highlight-field";
+import {
+  getHighlights,
+  removeHighlightEffect,
+  updateHighlightNoteEffect,
+  type Highlight,
+} from "./highlight-field";
 
 const TOP_BOUND_VH = 14;
 const BOTTOM_MARGIN_PX = 80;
@@ -27,6 +32,39 @@ export function createHighlightSidebar(container: HTMLElement, view: EditorView)
 
   function remove(id: string): void {
     view.dispatch({ effects: removeHighlightEffect.of(id) });
+  }
+
+  function commitNote(id: string, value: string): void {
+    view.dispatch({ effects: updateHighlightNoteEffect.of({ id, note: value.trim() }) });
+  }
+
+  function startNoteEdit(card: HTMLElement, highlight: Highlight): void {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "highlight-card-note-input";
+    input.value = highlight.note ?? "";
+    input.placeholder = "Add a note…";
+    const body = card.querySelector(".highlight-card-snippet, .highlight-card-note");
+    body?.replaceWith(input);
+    input.focus();
+
+    let cancelled = false;
+    input.addEventListener("click", (event) => event.stopPropagation());
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        commitNote(highlight.id, input.value);
+      } else if (event.key === "Escape") {
+        cancelled = true;
+        render();
+        return;
+      }
+      event.stopPropagation();
+    });
+    input.addEventListener("blur", () => {
+      if (!cancelled) {
+        commitNote(highlight.id, input.value);
+      }
+    });
   }
 
   function render(): void {
@@ -61,9 +99,24 @@ export function createHighlightSidebar(container: HTMLElement, view: EditorView)
       label.className = "highlight-card-label";
       label.textContent = bucketLabel(highlight.bucket);
 
-      const snippet = document.createElement("p");
-      snippet.className = "highlight-card-snippet";
-      snippet.textContent = truncate(view.state.sliceDoc(highlight.from, highlight.to));
+      const body = document.createElement("p");
+      if (highlight.note !== undefined) {
+        body.className = "highlight-card-note";
+        body.textContent = highlight.note;
+      } else {
+        body.className = "highlight-card-snippet";
+        body.textContent = truncate(view.state.sliceDoc(highlight.from, highlight.to));
+      }
+
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.className = "highlight-card-edit";
+      editButton.textContent = "✎";
+      editButton.setAttribute("aria-label", "Edit note");
+      editButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        startNoteEdit(card, highlight);
+      });
 
       const removeButton = document.createElement("button");
       removeButton.type = "button";
@@ -75,7 +128,7 @@ export function createHighlightSidebar(container: HTMLElement, view: EditorView)
         remove(highlight.id);
       });
 
-      card.append(label, snippet, removeButton);
+      card.append(label, body, editButton, removeButton);
       card.addEventListener("click", () => jumpTo(highlight.from));
       container.appendChild(card);
 
