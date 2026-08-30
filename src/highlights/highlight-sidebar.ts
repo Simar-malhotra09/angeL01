@@ -2,6 +2,10 @@ import { EditorSelection } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
 import { bucketLabel } from "./buckets";
 import {
+  getHighlightCardLayout,
+  onHighlightCardLayoutChange,
+} from "./card-layout";
+import {
   getHighlights,
   removeHighlightEffect,
   updateHighlightNoteEffect,
@@ -67,6 +71,48 @@ export function createHighlightSidebar(container: HTMLElement, view: EditorView)
     });
   }
 
+  function createCard(highlight: Highlight): HTMLElement {
+    const card = document.createElement("div");
+    card.className = "highlight-card";
+
+    const label = document.createElement("span");
+    label.className = "highlight-card-label";
+    label.textContent = bucketLabel(highlight.bucket);
+
+    const body = document.createElement("p");
+    if (highlight.note !== undefined) {
+      body.className = "highlight-card-note";
+      body.textContent = highlight.note;
+    } else {
+      body.className = "highlight-card-snippet";
+      body.textContent = truncate(view.state.sliceDoc(highlight.from, highlight.to));
+    }
+
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "highlight-card-edit";
+    editButton.textContent = "✎";
+    editButton.setAttribute("aria-label", "Edit note");
+    editButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      startNoteEdit(card, highlight);
+    });
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "highlight-card-remove";
+    removeButton.textContent = "×";
+    removeButton.setAttribute("aria-label", "Remove highlight");
+    removeButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      remove(highlight.id);
+    });
+
+    card.append(label, body, editButton, removeButton);
+    card.addEventListener("click", () => jumpTo(highlight.from));
+    return card;
+  }
+
   function render(): void {
     const highlights = getHighlights(view.state);
     container.replaceChildren();
@@ -77,6 +123,23 @@ export function createHighlightSidebar(container: HTMLElement, view: EditorView)
 
     const topBound = window.innerHeight * (TOP_BOUND_VH / 100);
     const bottomBound = window.innerHeight - BOTTOM_MARGIN_PX;
+
+    if (getHighlightCardLayout() === "sticky") {
+      const sorted = [...highlights].sort((a, b) => a.from - b.from);
+      let nextTop = topBound;
+      for (const highlight of sorted) {
+        const card = createCard(highlight);
+        card.style.top = `${nextTop}px`;
+        container.appendChild(card);
+        const bottom = nextTop + card.offsetHeight;
+        if (bottom > bottomBound) {
+          card.remove();
+          break;
+        }
+        nextTop = bottom + CARD_GAP_PX;
+      }
+      return;
+    }
 
     const visible: { highlight: Highlight; top: number }[] = [];
     for (const highlight of highlights) {
@@ -91,45 +154,8 @@ export function createHighlightSidebar(container: HTMLElement, view: EditorView)
 
     let prevBottom = -Infinity;
     for (const { highlight, top } of visible) {
-      const card = document.createElement("div");
-      card.className = "highlight-card";
+      const card = createCard(highlight);
       card.style.top = `${Math.max(top, prevBottom + CARD_GAP_PX)}px`;
-
-      const label = document.createElement("span");
-      label.className = "highlight-card-label";
-      label.textContent = bucketLabel(highlight.bucket);
-
-      const body = document.createElement("p");
-      if (highlight.note !== undefined) {
-        body.className = "highlight-card-note";
-        body.textContent = highlight.note;
-      } else {
-        body.className = "highlight-card-snippet";
-        body.textContent = truncate(view.state.sliceDoc(highlight.from, highlight.to));
-      }
-
-      const editButton = document.createElement("button");
-      editButton.type = "button";
-      editButton.className = "highlight-card-edit";
-      editButton.textContent = "✎";
-      editButton.setAttribute("aria-label", "Edit note");
-      editButton.addEventListener("click", (event) => {
-        event.stopPropagation();
-        startNoteEdit(card, highlight);
-      });
-
-      const removeButton = document.createElement("button");
-      removeButton.type = "button";
-      removeButton.className = "highlight-card-remove";
-      removeButton.textContent = "×";
-      removeButton.setAttribute("aria-label", "Remove highlight");
-      removeButton.addEventListener("click", (event) => {
-        event.stopPropagation();
-        remove(highlight.id);
-      });
-
-      card.append(label, body, editButton, removeButton);
-      card.addEventListener("click", () => jumpTo(highlight.from));
       container.appendChild(card);
 
       prevBottom = card.offsetTop + card.offsetHeight;
@@ -137,6 +163,7 @@ export function createHighlightSidebar(container: HTMLElement, view: EditorView)
   }
 
   render();
+  onHighlightCardLayoutChange(render);
 
   return { update: render };
 }

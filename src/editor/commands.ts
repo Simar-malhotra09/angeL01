@@ -8,6 +8,7 @@ import {
 } from "./formatting-commands";
 import { encloseSelection } from "./enclose-command";
 import { BUCKETS, type BucketId } from "../highlights/buckets";
+import { toggleHighlightCardLayout } from "../highlights/card-layout";
 import {
   addHighlightEffect,
   findHighlightAt,
@@ -69,6 +70,15 @@ function highlightPaletteCommands(): PaletteCommand[] {
       label: "Remove Highlight",
       keys: "Mod-Alt-Shift-0",
       run: removeHighlight,
+    },
+    {
+      id: "highlight-layout-toggle",
+      label: "Toggle Sticky Cards",
+      keys: "Mod-Alt-Shift-s",
+      run: () => {
+        toggleHighlightCardLayout();
+        return true;
+      },
     },
   ];
 }
