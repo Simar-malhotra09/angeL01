@@ -28,6 +28,7 @@ async function main(): Promise<void> {
   const copyButton = document.getElementById("copy-button");
   const docTitleEl = document.querySelector<HTMLInputElement>("#doc-title");
   const highlightPanelEl = document.getElementById("highlight-panel");
+  const widthRangeEl = document.querySelector<HTMLInputElement>("#width-range");
 
   if (
     !shell ||
@@ -36,10 +37,11 @@ async function main(): Promise<void> {
     !exportButton ||
     !copyButton ||
     !docTitleEl ||
-    !highlightPanelEl
+    !highlightPanelEl ||
+    !widthRangeEl
   ) {
     throw new Error(
-      "Missing required DOM mount points: #editor-shell, #word-count, #toc, #export-button, #copy-button, #doc-title, and/or #highlight-panel",
+      "Missing required DOM mount points: #editor-shell, #word-count, #toc, #export-button, #copy-button, #doc-title, #highlight-panel, and/or #width-range",
     );
   }
 
@@ -121,6 +123,21 @@ async function main(): Promise<void> {
   };
   view.scrollDOM.addEventListener("scroll", scheduleHighlightUpdate);
   window.addEventListener("resize", scheduleHighlightUpdate);
+
+  const storedWidth = Number(localStorage.getItem("angel01-editor-width"));
+  const clampedWidth = Math.min(
+    Number(widthRangeEl.max),
+    Math.max(
+      Number(widthRangeEl.min),
+      storedWidth > 0 ? storedWidth : Number(widthRangeEl.value),
+    ),
+  );
+  shell.style.maxWidth = `${clampedWidth}px`;
+  widthRangeEl.value = String(clampedWidth);
+  widthRangeEl.addEventListener("input", () => {
+    shell.style.maxWidth = `${widthRangeEl.value}px`;
+    localStorage.setItem("angel01-editor-width", widthRangeEl.value);
+  });
 
   exportButton.addEventListener("click", () => {
     const title = docTitleEl.value.trim();

@@ -77,6 +77,50 @@ body {
   color: var(--accent);
 }
 
+#width-control {
+  position: fixed;
+  bottom: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px;
+  opacity: 0.35;
+  transition: opacity 0.2s ease;
+}
+
+#width-control:hover,
+#width-control:focus-within {
+  opacity: 1;
+}
+
+#width-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 160px;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(163, 159, 146, 0.4);
+  outline: none;
+  cursor: pointer;
+}
+
+#width-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+#width-range::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 #statusbar {
   position: fixed;
   bottom: 0;
