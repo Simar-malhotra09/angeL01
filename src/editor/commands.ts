@@ -6,6 +6,7 @@ import {
   makeToggleHeading,
   insertLink,
 } from "./formatting-commands";
+import { encloseSelection } from "./enclose-command";
 import { BUCKETS, type BucketId } from "../highlights/buckets";
 import {
   addHighlightEffect,
@@ -101,6 +102,12 @@ export function createPaletteCommands(
       label: "Insert Link",
       keys: "Mod-Alt-k",
       run: insertLink,
+    },
+    {
+      id: "enclose-selection",
+      label: "Enclose Selection",
+      keys: "Mod-Alt-s",
+      run: encloseSelection,
     },
     {
       id: "insert-image",
