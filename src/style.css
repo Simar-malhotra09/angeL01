@@ -675,3 +675,52 @@ body {
 .highlight-card-remove:hover {
   color: var(--accent);
 }
+
+.highlight-card-note {
+  margin: 3px 0 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--fg);
+}
+
+.highlight-card-note-input {
+  display: block;
+  width: 100%;
+  margin: 3px 0 0 0;
+  padding: 2px 0;
+  border: none;
+  border-bottom: 1px solid var(--faint);
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--fg);
+  caret-color: var(--accent);
+  outline: none;
+}
+
+.highlight-card-note-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+.highlight-card-edit {
+  position: absolute;
+  top: 4px;
+  right: 26px;
+  border: none;
+  background: none;
+  padding: 2px 4px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--faint);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.highlight-card:hover .highlight-card-edit {
+  opacity: 1;
+}
+
+.highlight-card-edit:hover {
+  color: var(--accent);
+}
