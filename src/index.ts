@@ -4,6 +4,7 @@ import editor from "../editor.html";
 import { Status, type Doc, type DocSummary } from "./storage";
 import { isSupportedImageType } from "./image/image-format";
 import { isValidId } from "./id";
+import { compileTypst } from "./typst/compile";
 
 const db = new Database("angel01.sqlite");
 
@@ -156,6 +157,27 @@ const server = Bun.serve({
         const data = new Uint8Array(await req.arrayBuffer());
         insertImageStmt.run(req.params.id, mimeType, data, Date.now());
         return Response.json({ ok: true });
+      },
+    },
+    "/api/typst-svg": {
+      POST: async (req) => {
+        const body = (await req.json()) as { src?: unknown; mode?: unknown };
+        const mode = body.mode;
+        if (
+          typeof body.src !== "string" ||
+          (mode !== "inline" && mode !== "display" && mode !== "doc")
+        ) {
+          return new Response("Expected { src: string, mode: inline|display|doc }", {
+            status: 400,
+          });
+        }
+        const result = await compileTypst(body.src, mode);
+        if (!result.ok) {
+          return new Response(result.detail, { status: 422 });
+        }
+        return new Response(result.svg, {
+          headers: { "content-type": "image/svg+xml" },
+        });
       },
     },
   },
