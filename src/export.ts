@@ -1,6 +1,13 @@
 import type { EditorView } from "@codemirror/view";
 import { getImage } from "./image/image-store";
 import { renderMarkdownToHtml, escapeHtml, slugify, type TocHeading } from "./markdown/markdown-to-html";
+import {
+  extractTypstSnippets,
+  substituteTypst,
+  type TypstSnippetMode,
+  type TypstSwap,
+} from "./typst/extract";
+import { fetchTypstSvg } from "./typst/client";
 
 const IMAGE_REF_RE = /!\[[^\]]*\]\(image:([a-zA-Z0-9-]+)\)/g;
 
@@ -141,6 +148,34 @@ nav.x-toc a.x-toc-3 { padding-left: 24px; }
   border-color: #b5624a;
   color: #b5624a;
 }
+
+.typst-inline svg {
+  height: 1.05em;
+  width: auto;
+  vertical-align: -0.2em;
+}
+.typst-display {
+  margin: 1em 0;
+  text-align: center;
+}
+.typst-display svg,
+.typst-doc svg {
+  max-width: 100%;
+  height: auto;
+}
+.typst-doc {
+  margin: 1em 0;
+}
+.typst-error {
+  padding: 8px 12px;
+  border: 1px solid #b5624a;
+  border-radius: 4px;
+  color: #b5624a;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 `;
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -235,10 +270,30 @@ function downloadHtmlFile(filename: string, html: string): void {
   URL.revokeObjectURL(url);
 }
 
+async function renderTypstSnippet(token: string, mode: TypstSnippetMode, src: string): Promise<TypstSwap> {
+  const result = await fetchTypstSvg(src, mode);
+  if (!result.ok) {
+    return {
+      token,
+      html: `<pre class="typst-error">typst failed: ${escapeHtml(result.body)}</pre>`,
+    };
+  }
+  if (mode === "inline") {
+    return { token, html: `<span class="typst-inline">${result.body}</span>` };
+  }
+  const cls = mode === "display" ? "typst-display" : "typst-doc";
+  return { token, html: `<div class="${cls}">${result.body}</div>` };
+}
+
 export async function exportDocumentAsHtml(view: EditorView, title: string): Promise<void> {
   const doc = view.state.doc.toString();
-  const imageDataUrls = await resolveImageDataUrls(doc);
-  const { html: bodyHtml, headings } = renderMarkdownToHtml(doc, (id) => imageDataUrls.get(id) ?? null);
+  const { template, snippets } = extractTypstSnippets(doc);
+  const swaps: TypstSwap[] = [];
+  for (const snippet of snippets) {
+    swaps.push(await renderTypstSnippet(snippet.token, snippet.mode, snippet.src));
+  }
+  const imageDataUrls = await resolveImageDataUrls(template);
+  const { html: bodyHtml, headings } = renderMarkdownToHtml(template, (id) => imageDataUrls.get(id) ?? null);
   const filename = `${slugify(title)}.html`;
-  downloadHtmlFile(filename, buildHtmlDocument(title, bodyHtml, renderToc(headings), doc));
+  downloadHtmlFile(filename, buildHtmlDocument(title, substituteTypst(bodyHtml, swaps), renderToc(headings), doc));
 }
