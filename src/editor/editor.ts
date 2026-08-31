@@ -22,6 +22,11 @@ import { urlHoverTooltip, findLinkAt } from "../tooltip/url-tooltip";
 import { markdownDecorations } from "./formatting-decorations";
 import { imageHoverTooltip } from "../tooltip/image-tooltip";
 import { imageEmbed } from "./image-embed";
+import {
+  typstPreviewExtension,
+  setTypstPreviews,
+  currentTypstKeys,
+} from "../tooltip/typst-preview";
 import { insertImageFile } from "../image/image-insert";
 import { getDocID } from "../storage";
 import { isSupportedImageType, IMAGE_FILE_ACCEPT } from "../image/image-format";
@@ -194,14 +199,16 @@ export function createEditor(
 
   async function saveDoc(cm: { getValue: () => string }): Promise<Doc> {
     const docID = getDocID();
+    const content = cm.getValue();
     const doc: Doc = {
       id: docID,
       title: callbacks.getTitle(),
-      content: cm.getValue(),
+      content,
       createdAt,
       updatedAt: Date.now(),
       status: initialStatus,
     };
+    setTypstPreviews(view, currentTypstKeys(content));
 
     if (bufferTimeout !== null) {
       clearTimeout(bufferTimeout);
@@ -289,6 +296,7 @@ export function createEditor(
     smartTypographyHandler,
     markdownDecorations,
     imageEmbed,
+    typstPreviewExtension,
     highlightField,
     highlightDecorations,
     EditorView.domEventHandlers({
@@ -350,6 +358,11 @@ export function createEditor(
 
   if (initialHighlights.length > 0) {
     view.dispatch({ effects: loadHighlightsEffect.of(initialHighlights) });
+  }
+
+  const initialTypstKeys = currentTypstKeys(initialDoc);
+  if (initialTypstKeys.size > 0) {
+    setTypstPreviews(view, initialTypstKeys);
   }
 
   function flushPending(): void {
