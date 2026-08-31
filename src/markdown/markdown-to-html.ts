@@ -83,52 +83,27 @@ export function stripInlineMarkdown(text: string): string {
 
 function collectInlineSpans(lineText: string, resolveImage: ImageResolver): InlineSpan[] {
   const candidates: InlineSpan[] = [];
-  let match: RegExpExecArray | null;
 
-  IMAGE_RE.lastIndex = 0;
-  while ((match = IMAGE_RE.exec(lineText)) !== null) {
-    candidates.push({
-      from: match.index,
-      to: match.index + match[0].length,
-      html: renderImageSpan(match[1]!, resolveImage(match[2]!)),
-    });
-  }
+  // Matches are materialised before any rendering: rendering recurses into
+  // this function, which resets the shared regex state, so calling render*
+  // inside an exec() while-loop makes the outer loop re-match the same span
+  // forever.
+  const collect = (re: RegExp, render: (match: RegExpMatchArray) => string): void => {
+    re.lastIndex = 0;
+    for (const match of lineText.matchAll(re)) {
+      candidates.push({
+        from: match.index,
+        to: match.index + match[0].length,
+        html: render(match),
+      });
+    }
+  };
 
-  LINK_RE.lastIndex = 0;
-  while ((match = LINK_RE.exec(lineText)) !== null) {
-    candidates.push({
-      from: match.index,
-      to: match.index + match[0].length,
-      html: renderLinkSpan(match[1]!, match[2]!),
-    });
-  }
-
-  BOLD_RE.lastIndex = 0;
-  while ((match = BOLD_RE.exec(lineText)) !== null) {
-    candidates.push({
-      from: match.index,
-      to: match.index + match[0].length,
-      html: `<strong>${renderLineInline(match[1]!, resolveImage)}</strong>`,
-    });
-  }
-
-  ITALIC_RE.lastIndex = 0;
-  while ((match = ITALIC_RE.exec(lineText)) !== null) {
-    candidates.push({
-      from: match.index,
-      to: match.index + match[0].length,
-      html: `<em>${renderLineInline(match[1]!, resolveImage)}</em>`,
-    });
-  }
-
-  UNDERSCORE_ITALIC_RE.lastIndex = 0;
-  while ((match = UNDERSCORE_ITALIC_RE.exec(lineText)) !== null) {
-    candidates.push({
-      from: match.index,
-      to: match.index + match[0].length,
-      html: `<em>${renderLineInline(match[1]!, resolveImage)}</em>`,
-    });
-  }
+  collect(IMAGE_RE, (match) => renderImageSpan(match[1]!, resolveImage(match[2]!)));
+  collect(LINK_RE, (match) => renderLinkSpan(match[1]!, match[2]!));
+  collect(BOLD_RE, (match) => `<strong>${renderLineInline(match[1]!, resolveImage)}</strong>`);
+  collect(ITALIC_RE, (match) => `<em>${renderLineInline(match[1]!, resolveImage)}</em>`);
+  collect(UNDERSCORE_ITALIC_RE, (match) => `<em>${renderLineInline(match[1]!, resolveImage)}</em>`);
 
   candidates.sort((a, b) => a.from - b.from || a.to - b.to);
 
