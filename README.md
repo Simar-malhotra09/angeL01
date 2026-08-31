@@ -16,10 +16,17 @@ That is it.
 - :w initiates explicit write to sqlite db.
 - :wq/:q writes and goes back to homepage.
 - Export as HTML with most of the functionality included.
+- Typst in posts (rendered to SVG on HTML export, needs `typst` installed):
+  - `$ ... $` for math inline in a sentence
+  - `$$ ... $$` for a centred math block
+  - ```` ```typst ```` blocks for full Typst excerpts
+  - Watch out: in Typst math, whole words need quotes — write `$ t_"token" $`, not `$ time_token $`.
 
 Example: This blog: [Who needs a runtime?](https://simar-malhotra09.github.io/writing/documents/who-needs-a-runtime.html) was written using angel.
 
 Update log:
+
+[2026/Aug/30]: Basic Typst support: inline math, centred math blocks, and full Typst excerpts compile to SVG on HTML export (uses your installed `typst`, cached so re-exports are fast).
 
 [2026/Aug/27]: Added tabs in command palette. Group similar commands and essentially paginate them on main tab by that group + orphan commands.
 
@@ -42,5 +49,5 @@ TODO:
 - [ ] For highlights, add a stickly vs floating (the current/def behaviour). Sticky will show as many card as can be fit in the current view.
 - [ ] Enclosing text with custom char: Basically, select text in visual mode + hotkey + left side char + right side char. Eg: text -> (text)
 - [ ] UI oh god the UI; where is your taste?
-- [ ] Can we add, at the minimum, basic typst functionality?
+- [x] Can we add, at the minimum, basic typst functionality? (done: rendered to SVG on HTML export)
 - [ ] Being able to write romaji underneath japanese text.
