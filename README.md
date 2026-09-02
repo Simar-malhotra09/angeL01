@@ -27,13 +27,13 @@ Update log:
 
 [2026/Sep/1]: Enclosing text, Sticky highlight cards, Typst blocks, width slider (not stable).
 
-    - You can now enclose text within chars: Select text (cursor or visual mode), Cmd + Opt + S, enter two chars, first goes to start of selected line, second goes to end.
+- You can now enclose text within chars: Select text (cursor or visual mode), Cmd + Opt + S, enter two chars, first goes to start of selected line, second goes to end.
 
-    - Sticky/Floating(default) highlight cards: By default, they are embeeded on the same document idx as the highlighted line; making them sticky will push all of them to the top, while preserving the order.
+- Sticky/Floating(default) highlight cards: By default, they are embeeded on the same document idx as the highlighted line; making them sticky will push all of them to the top, while preserving the order.
 
-    - Typst blocks: You can now write typst code, using $...$ for inline math block, $$...$$ for centered math block, and ```typst for arbitrary code. On pressing :w, we send a req to `/api/typst-svg`, which spawns a process to compile the code with the typst compile (ie the binary must be installed in you system), exports it as svg, and you see a `preview` tooltip in the editor, right after the eclosing '$/$$'. Hovering on it shows the svg, so you can easily modify the code and see how it compiles live. Note that currently we don't have support for errors (which happen really freq); we intent to add that soon. When you export you document as html, all the svgs get inline embedded. See bugs/todo section for known issues.
+- Typst blocks: You can now write typst code, using $...$ for inline math block, $$...$$ for centered math block, and ```typst for arbitrary code. On pressing :w, we send a req to `/api/typst-svg`, which spawns a process to compile the code with the typst compile (ie the binary must be installed in you system), exports it as svg, and you see a `preview` tooltip in the editor, right after the eclosing '$/$$'. Hovering on it shows the svg, so you can easily modify the code and see how it compiles live. Note that currently we don't have support for errors (which happen really freq); we intent to add that soon. When you export you document as html, all the svgs get inline embedded. See bugs/todo section for known issues.
 
-    - Width slider: You can now increase or decrease the width of the text-writeable area with the slider. It has some known issues where the text collides with the sidebar and we will fix that next.
+- Width slider: You can now increase or decrease the width of the text-writeable area with the slider. It has some known issues where the text collides with the sidebar and we will fix that next.
 
 [2026/Aug/30]: Basic Typst support: inline math, centred math blocks, and full Typst excerpts compile to SVG on HTML export (uses your installed `typst`, cached so re-exports are fast).
 
