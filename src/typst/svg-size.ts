@@ -13,7 +13,7 @@ function em(pt: number): string {
   return `${(pt / PT_PER_EM).toFixed(3)}em`;
 }
 
-export function scaleSvgToText(svg: string, mode: TypstSnippetMode): string {
+function scale(svg: string, styleFor: (widthPt: number, heightPt: number) => string): string {
   const tag = SVG_TAG_RE.exec(svg);
   if (tag === null || tag[1] === undefined || tag[1].includes("style=")) {
     return svg;
@@ -23,9 +23,25 @@ export function scaleSvgToText(svg: string, mode: TypstSnippetMode): string {
   if (width === null || height === null || width[1] === undefined || height[1] === undefined) {
     return svg;
   }
-  const style =
-    mode === "inline"
-      ? `height:${em(Number(height[1]))};width:auto`
-      : `width:${em(Number(width[1]))};height:auto;max-width:100%`;
+  const style = styleFor(Number(width[1]), Number(height[1]));
   return `${svg.slice(0, tag.index)}<svg style="${style}"${tag[1]}>${svg.slice(tag.index + tag[0].length)}`;
+}
+
+export function scaleSvgToText(svg: string, mode: TypstSnippetMode): string {
+  return scale(svg, (widthPt, heightPt) =>
+    mode === "inline"
+      ? `height:${em(heightPt)};width:auto`
+      : `width:${em(widthPt)};height:auto;max-width:100%`,
+  );
+}
+
+// The preview tooltip has no page column to fit into, so unlike the export
+// sizing this never clamps width: the svg keeps its natural text size and the
+// tooltip itself scrolls when the content is too big for the viewport.
+export function scaleSvgForPreview(svg: string, mode: TypstSnippetMode): string {
+  return scale(svg, (widthPt, heightPt) =>
+    mode === "inline"
+      ? `height:${em(heightPt)};width:auto`
+      : `width:${em(widthPt)};height:auto`,
+  );
 }

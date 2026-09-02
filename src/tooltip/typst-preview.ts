@@ -8,7 +8,7 @@ import {
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view";
 import { findTypstMarkers, type TypstMarker, type TypstSnippetMode } from "../typst/extract";
 import { fetchTypstSvg } from "../typst/client";
-import { scaleSvgToText } from "../typst/svg-size";
+import { scaleSvgForPreview } from "../typst/svg-size";
 
 interface PreviewState {
   readonly keys: ReadonlySet<string>;
@@ -72,7 +72,7 @@ function fillTip(tip: HTMLElement, entry: PreviewEntry, mode: TypstSnippetMode):
   if (entry.ok) {
     const holder = document.createElement("span");
     holder.className = "cm-typst-preview-svg";
-    holder.innerHTML = scaleSvgToText(entry.body, mode);
+    holder.innerHTML = scaleSvgForPreview(entry.body, mode);
     tip.appendChild(holder);
   } else {
     const err = document.createElement("pre");
@@ -183,8 +183,8 @@ const typstPreviewTheme: Extension = EditorView.baseTheme({
     background: "#faf8f4",
     border: "1px solid #a39f92",
     borderRadius: "4px",
-    maxWidth: "420px",
-    maxHeight: "320px",
+    maxWidth: "90vw",
+    maxHeight: "70vh",
     overflow: "auto",
     whiteSpace: "nowrap",
     fontSize: "19px",
@@ -195,8 +195,6 @@ const typstPreviewTheme: Extension = EditorView.baseTheme({
   },
   ".cm-typst-preview-svg svg": {
     display: "block",
-    maxWidth: "400px",
-    height: "auto",
   },
   ".cm-typst-preview-error": {
     margin: "0",
