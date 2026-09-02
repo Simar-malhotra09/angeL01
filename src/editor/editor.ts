@@ -249,6 +249,48 @@ export function createEditor(
     });
   });
 
+  // Move j/k one document line at a time. The built-in moveByLines resolves
+  // the target by screen pixels via CodeMirror's moveVertically, which gets
+  // lost between tall block widgets (inline images): k from an image line
+  // skipped every preceding widget and landed on the first image. gj/gk keep
+  // the built-in pixel logic for wrapped display lines.
+  const moveByLogicalLines: import("@replit/codemirror-vim").MotionFn = (
+    cm,
+    head,
+    motionArgs,
+    vim,
+  ) => {
+    let endCh = head.ch;
+    if (vim.lastMotion === moveByLogicalLines) {
+      endCh = vim.lastHPos;
+    } else {
+      vim.lastHPos = endCh;
+    }
+    const repeat = motionArgs.repeat + (motionArgs.repeatOffset ?? 0);
+    const first = cm.firstLine();
+    const last = cm.lastLine();
+    const line = motionArgs.forward ? head.line + repeat : head.line - repeat;
+    if (line < first && head.line === first) {
+      return { line: first, ch: 0 };
+    }
+    if (line > last && head.line === last) {
+      return { line: last, ch: cm.getLine(last).length };
+    }
+    const clamped = Math.min(Math.max(line, first), last);
+    endCh = Math.min(endCh, cm.getLine(clamped).length);
+    vim.lastHSPos = cm.charCoords({ line: clamped, ch: endCh }, "div").left;
+    return { line: clamped, ch: endCh };
+  };
+  Vim.defineMotion("moveByLogicalLines", moveByLogicalLines);
+  Vim.mapCommand("j", "motion", "moveByLogicalLines", {
+    forward: true,
+    linewise: true,
+  }, {});
+  Vim.mapCommand("k", "motion", "moveByLogicalLines", {
+    forward: false,
+    linewise: true,
+  }, {});
+
   const extensions: Extension[] = [
     vim(),
     history(),
