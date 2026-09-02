@@ -6,6 +6,7 @@ import {
   ViewPlugin,
   type ViewUpdate,
 } from "@codemirror/view";
+import { getCM } from "@replit/codemirror-vim";
 import { parseHeading } from "../markdown/headings";
 import { LINK_RE } from "../markdown/links";
 
@@ -148,15 +149,57 @@ function buildDecorations(view: EditorView): DecorationSet {
 export const markdownDecorations = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
+    private pointerSelecting = false;
+    private needsRebuild = false;
+
+    private readonly view: EditorView;
+
+    private readonly onMouseDown = () => {
+      this.pointerSelecting = true;
+    };
+
+    private readonly onSelectSettled = () => {
+      if (!this.pointerSelecting) {
+        return;
+      }
+      this.pointerSelecting = false;
+      this.needsRebuild = true;
+      this.view.dispatch({});
+    };
 
     constructor(view: EditorView) {
+      this.view = view;
       this.decorations = buildDecorations(view);
+      view.dom.addEventListener("mousedown", this.onMouseDown);
+      document.addEventListener("mouseup", this.onSelectSettled);
+      window.addEventListener("blur", this.onSelectSettled);
     }
 
     update(update: ViewUpdate): void {
-      if (update.docChanged || update.viewportChanged || update.selectionSet) {
+      const rebuild = this.needsRebuild;
+      this.needsRebuild = false;
+      if (update.docChanged || update.viewportChanged || rebuild) {
         this.decorations = buildDecorations(update.view);
+        return;
       }
+      if (!update.selectionSet) {
+        return;
+      }
+      // Revealing/hiding markers mid-selection reflows the text under the
+      // pointer (a hidden image embed is 25+ chars), so the range you get
+      // isn't the one you aimed at. Keep decorations frozen until the
+      // selection settles, then rebuild once.
+      const vimVisual = getCM(update.view)?.state.vim?.visualMode === true;
+      if (this.pointerSelecting || vimVisual) {
+        return;
+      }
+      this.decorations = buildDecorations(update.view);
+    }
+
+    destroy(): void {
+      this.view.dom.removeEventListener("mousedown", this.onMouseDown);
+      document.removeEventListener("mouseup", this.onSelectSettled);
+      window.removeEventListener("blur", this.onSelectSettled);
     }
   },
   {
