@@ -295,7 +295,7 @@ body {
 }
 
 .cm-image-block {
-  margin: 1.5em 0;
+  padding: 1.5em 0;
   text-align: center;
 }
 
@@ -305,7 +305,7 @@ body {
 }
 
 .cm-image-caption {
-  margin: 0.4em 0 1.5em 0;
+  padding: 0.4em 0 0;
   text-align: center;
   font-size: 0.75em;
   font-style: italic;

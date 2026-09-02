@@ -16,7 +16,7 @@ class ImageBlockWidget extends WidgetType {
     return other.id === this.id && other.label === this.label;
   }
 
-  override toDOM(): HTMLElement {
+  override toDOM(view: EditorView): HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "cm-image-block";
     const img = document.createElement("img");
@@ -30,6 +30,7 @@ class ImageBlockWidget extends WidgetType {
       wrapper.appendChild(caption);
     }
 
+    img.addEventListener("load", () => view.requestMeasure());
     void getImage(this.id).then((blob) => {
       if (blob === null) {
         return;
