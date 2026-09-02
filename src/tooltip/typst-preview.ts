@@ -8,6 +8,7 @@ import {
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view";
 import { findTypstMarkers, type TypstMarker, type TypstSnippetMode } from "../typst/extract";
 import { fetchTypstSvg } from "../typst/client";
+import { scaleSvgToText } from "../typst/svg-size";
 
 interface PreviewState {
   readonly keys: ReadonlySet<string>;
@@ -66,12 +67,12 @@ export const previewKeysField = StateField.define<PreviewState>({
   },
 });
 
-function fillTip(tip: HTMLElement, entry: PreviewEntry): void {
+function fillTip(tip: HTMLElement, entry: PreviewEntry, mode: TypstSnippetMode): void {
   tip.textContent = "";
   if (entry.ok) {
     const holder = document.createElement("span");
     holder.className = "cm-typst-preview-svg";
-    holder.innerHTML = entry.body;
+    holder.innerHTML = scaleSvgToText(entry.body, mode);
     tip.appendChild(holder);
   } else {
     const err = document.createElement("pre");
@@ -102,12 +103,12 @@ class TypstPreviewWidget extends WidgetType {
     const key = this.marker.key;
     const cached = previewCache.get(key);
     if (cached !== undefined) {
-      fillTip(tip, cached);
+      fillTip(tip, cached, this.marker.mode);
     } else {
       tip.textContent = "compiling\u2026";
       void compileSnippet(this.marker.src, this.marker.mode).then((entry) => {
         if (badge.isConnected) {
-          fillTip(tip, entry);
+          fillTip(tip, entry, this.marker.mode);
         }
       });
     }
@@ -186,6 +187,7 @@ const typstPreviewTheme: Extension = EditorView.baseTheme({
     maxHeight: "320px",
     overflow: "auto",
     whiteSpace: "nowrap",
+    fontSize: "19px",
     boxShadow: "0 2px 8px rgba(43, 40, 34, 0.15)",
   },
   ".cm-typst-preview:hover .cm-typst-preview-tip": {

@@ -8,6 +8,7 @@ import {
   type TypstSwap,
 } from "./typst/extract";
 import { fetchTypstSvg } from "./typst/client";
+import { scaleSvgToText } from "./typst/svg-size";
 
 const IMAGE_REF_RE = /!\[[^\]]*\]\(image:([a-zA-Z0-9-]+)\)/g;
 
@@ -278,11 +279,12 @@ async function renderTypstSnippet(token: string, mode: TypstSnippetMode, src: st
       html: `<pre class="typst-error">typst failed: ${escapeHtml(result.body)}</pre>`,
     };
   }
+  const svg = scaleSvgToText(result.body, mode);
   if (mode === "inline") {
-    return { token, html: `<span class="typst-inline">${result.body}</span>` };
+    return { token, html: `<span class="typst-inline">${svg}</span>` };
   }
   const cls = mode === "display" ? "typst-display" : "typst-doc";
-  return { token, html: `<div class="${cls}">${result.body}</div>` };
+  return { token, html: `<div class="${cls}">${svg}</div>` };
 }
 
 export async function exportDocumentAsHtml(view: EditorView, title: string): Promise<void> {

@@ -25,6 +25,8 @@ Example: This blog: [Who needs a runtime?](https://simar-malhotra09.github.io/wr
 
 Update log:
 
+[2026/Sep/2]: Typst svgs now size themselves to the text around them. Before, the math inside an svg was always drawn small (11pt) and sat in a wide empty frame, so it looked tiny next to your writing. Now the glyphs come out at exactly the size of the body text, both in the editor preview and on export, and the empty frame is much thinner. If you want bigger or smaller math on purpose, use a ```typst block with the code on its own lines and say `#set text(size: 14pt)` inside it — sizes end up relative: 14pt comes out 14/11 times the normal text size. Writing the fence and the code on a single line does nothing, the fence only works with line breaks.
+
 [2026/Sep/1]: Enclosing text, Sticky highlight cards, Typst blocks, width slider (not stable).
 
 - You can now enclose text within chars: Select text (cursor or visual mode), Cmd + Opt + S, enter two chars, first goes to start of selected line, second goes to end.

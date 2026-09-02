@@ -24,7 +24,7 @@ export type TypstCompileResult = TypstCompileOk | TypstCompileErr;
 const CACHE_DIR = join(import.meta.dir, "..", "..", ".typst-cache");
 const MAX_SNIPPET_BYTES = 10_000;
 
-const PAGE_PREAMBLE = `#set page(width: auto, height: auto, margin: (x: 6pt, y: 6pt), fill: none)
+const PAGE_PREAMBLE = `#set page(width: auto, height: auto, margin: (x: 2pt, y: 2pt), fill: none)
 #set text(size: 11pt, fill: rgb("#2b2822"))
 `;
 
@@ -49,6 +49,8 @@ export async function compileTypst(src: string, mode: TypstSnippetMode): Promise
 
   const hash = createHash("sha256")
     .update(mode)
+    .update("\0")
+    .update(PAGE_PREAMBLE)
     .update("\0")
     .update(src)
     .digest("hex");
