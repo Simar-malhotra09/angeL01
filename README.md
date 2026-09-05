@@ -25,6 +25,8 @@ Example: This blog: [Who needs a runtime?](https://simar-malhotra09.github.io/wr
 
 Update log:
 
+[2026/Sep/5]: Typst errors are now readable. When a snippet fails to compile, the badge flips from `preview` to a solid `error` one, so you can tell something broke without hovering. Hovering shows the error in plain form: the message, which line and column of *your* snippet it points at (it used to point at a hidden wrapper file, which was useless), the line itself with a `^^^^` mark under the bad part, and typst's hints for fixing it. The tooltip also stamps the time the api call was made at the bottom, so you can tell whether the svg or error you're looking at still matches the code you have. On export, failed snippets come out in the html in the same plain format.
+
 [2026/Sep/2]: Typst svgs now size themselves to the text around them. Before, the math inside an svg was always drawn small (11pt) and sat in a wide empty frame, so it looked tiny next to your writing. Now the glyphs come out at exactly the size of the body text, both in the editor preview and on export, and the empty frame is much thinner. If you want bigger or smaller math on purpose, use a ```typst block with the code on its own lines and say `#set text(size: 14pt)` inside it — sizes end up relative: 14pt comes out 14/11 times the normal text size. Writing the fence and the code on a single line does nothing, the fence only works with line breaks.
 
 [2026/Sep/1]: Enclosing text, Sticky highlight cards, Typst blocks, width slider (not stable).
@@ -54,7 +56,7 @@ TODO:
   - [x] Highlights keeps capturing the selected text if the text has nothing in front of it. [textA][textB][highlight textA] works fine, but [textA][highlight textA][textB] captures [textB] as well.
   - [x] Styling with `*/**`: currently we can't style word with italics if it's a part of a bold sentence, ie, ** this is a _italicized_ word doesn't work**.
 
-- [ ] Add support for typst errors in preview tooltip.
+- [x] Add support for typst errors in preview tooltip.
 - [ ] Being able to force-index lines/text content in the Toc sidebar: Currently only #/##/### header sections get an entry there.
 - [ ] UI oh god the UI; where is your taste?
 - [ ] Being able to write romaji underneath japanese text.
