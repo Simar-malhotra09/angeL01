@@ -124,20 +124,35 @@ async function main(): Promise<void> {
   view.scrollDOM.addEventListener("scroll", scheduleHighlightUpdate);
   window.addEventListener("resize", scheduleHighlightUpdate);
 
+  // keep the centred text column clear of the fixed sidebars: the toc needs
+  // 220px on the left (40 offset + 180 wide) and the highlight panel 240px
+  // on the right, plus 80px of breathing room. Below 1100px the sidebars
+  // are hidden, so nothing is reserved.
+  const sliderMin = Number(widthRangeEl.min);
+  const sliderMax = Number(widthRangeEl.max);
+  const SIDEBAR_RESERVE = Math.max(40 + 180, 40 + 200) * 2 + 80;
+  const allowedMaxWidth = (): number =>
+    window.innerWidth < 1100
+      ? sliderMax
+      : Math.min(sliderMax, window.innerWidth - SIDEBAR_RESERVE);
+
   const storedWidth = Number(localStorage.getItem("angel01-editor-width"));
-  const clampedWidth = Math.min(
-    Number(widthRangeEl.max),
-    Math.max(
-      Number(widthRangeEl.min),
-      storedWidth > 0 ? storedWidth : Number(widthRangeEl.value),
-    ),
-  );
-  shell.style.maxWidth = `${clampedWidth}px`;
-  widthRangeEl.value = String(clampedWidth);
+  if (storedWidth > 0) {
+    widthRangeEl.value = String(
+      Math.min(sliderMax, Math.max(sliderMin, storedWidth)),
+    );
+  }
+  const applyWidth = (): void => {
+    // cap the slider itself so it never offers a width that would collide
+    widthRangeEl.max = String(allowedMaxWidth());
+    shell.style.maxWidth = `${Math.max(sliderMin, Number(widthRangeEl.value))}px`;
+  };
+  applyWidth();
   widthRangeEl.addEventListener("input", () => {
-    shell.style.maxWidth = `${widthRangeEl.value}px`;
+    applyWidth();
     localStorage.setItem("angel01-editor-width", widthRangeEl.value);
   });
+  window.addEventListener("resize", applyWidth);
 
   exportButton.addEventListener("click", () => {
     const title = docTitleEl.value.trim();
