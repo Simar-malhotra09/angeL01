@@ -173,7 +173,10 @@ const server = Bun.serve({
         }
         const result = await compileTypst(body.src, mode);
         if (!result.ok) {
-          return new Response(result.detail, { status: 422 });
+          return Response.json(
+            { detail: result.detail, diagnostics: result.diagnostics },
+            { status: 422 },
+          );
         }
         return new Response(result.svg, {
           headers: { "content-type": "image/svg+xml" },

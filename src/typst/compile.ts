@@ -8,6 +8,13 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import type { TypstSnippetMode } from "./extract";
+import {
+  TYPST_PAGE_PREAMBLE,
+  formatTypstDiagnostics,
+  parseTypstDiagnostics,
+  typstEquationPrefix,
+  type TypstDiagnostic,
+} from "./diagnostics";
 
 export interface TypstCompileOk {
   ok: true;
@@ -17,6 +24,7 @@ export interface TypstCompileOk {
 export interface TypstCompileErr {
   ok: false;
   detail: string;
+  diagnostics: TypstDiagnostic[];
 }
 
 export type TypstCompileResult = TypstCompileOk | TypstCompileErr;
@@ -24,27 +32,22 @@ export type TypstCompileResult = TypstCompileOk | TypstCompileErr;
 const CACHE_DIR = join(import.meta.dir, "..", "..", ".typst-cache");
 const MAX_SNIPPET_BYTES = 10_000;
 
-const PAGE_PREAMBLE = `#set page(width: auto, height: auto, margin: (x: 2pt, y: 2pt), fill: none)
-#set text(size: 11pt, fill: rgb("#2b2822"))
-`;
+const PAGE_PREAMBLE = TYPST_PAGE_PREAMBLE;
 
 export function buildTypstSource(src: string, mode: TypstSnippetMode): string {
-  switch (mode) {
-    case "inline":
-      return `${PAGE_PREAMBLE}#math.equation(block: false, $${src.trim()}$)`;
-    case "display":
-      return `${PAGE_PREAMBLE}#math.equation(block: true, $${src.trim()}$)`;
-    case "doc":
-      return `${PAGE_PREAMBLE}${src}`;
+  const prefix = typstEquationPrefix(mode);
+  if (prefix !== null) {
+    return `${PAGE_PREAMBLE}${prefix}${src.trim()}$)`;
   }
+  return `${PAGE_PREAMBLE}${src}`;
 }
 
 export async function compileTypst(src: string, mode: TypstSnippetMode): Promise<TypstCompileResult> {
   if (src.trim().length === 0) {
-    return { ok: false, detail: "empty snippet" };
+    return { ok: false, detail: "empty snippet", diagnostics: [] };
   }
   if (Buffer.byteLength(src, "utf8") > MAX_SNIPPET_BYTES) {
-    return { ok: false, detail: "snippet too large" };
+    return { ok: false, detail: "snippet too large", diagnostics: [] };
   }
 
   const hash = createHash("sha256")
@@ -70,7 +73,7 @@ export async function compileTypst(src: string, mode: TypstSnippetMode): Promise
       "--format",
       "svg",
       "--diagnostic-format",
-      "short",
+      "human",
       typPath,
       svgPath,
     ],
@@ -83,10 +86,20 @@ export async function compileTypst(src: string, mode: TypstSnippetMode): Promise
 
   if (exitCode !== 0 || !existsSync(svgPath)) {
     unlinkSync(typPath);
+    const diagnostics = parseTypstDiagnostics(stderr, src, mode);
+    const errorsOnly = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+    if (errorsOnly.length > 0) {
+      return {
+        ok: false,
+        detail: formatTypstDiagnostics(errorsOnly, src),
+        diagnostics: errorsOnly,
+      };
+    }
     const detail = stderr.trim().replaceAll(typPath, "snippet");
     return {
       ok: false,
       detail: detail.length > 0 ? detail : `typst exited with code ${exitCode}`,
+      diagnostics: [],
     };
   }
 

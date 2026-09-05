@@ -276,7 +276,7 @@ async function renderTypstSnippet(token: string, mode: TypstSnippetMode, src: st
   if (!result.ok) {
     return {
       token,
-      html: `<pre class="typst-error">typst failed: ${escapeHtml(result.body)}</pre>`,
+      html: `<pre class="typst-error">${escapeHtml(result.body)}</pre>`,
     };
   }
   const svg = scaleSvgToText(result.body, mode);

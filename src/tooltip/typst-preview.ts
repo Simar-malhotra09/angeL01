@@ -9,6 +9,7 @@ import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemir
 import { findTypstMarkers, type TypstMarker, type TypstSnippetMode } from "../typst/extract";
 import { fetchTypstSvg } from "../typst/client";
 import { scaleSvgForPreview } from "../typst/svg-size";
+import type { TypstDiagnostic } from "../typst/diagnostics";
 
 interface PreviewState {
   readonly keys: ReadonlySet<string>;
@@ -18,6 +19,8 @@ interface PreviewState {
 interface PreviewEntry {
   readonly ok: boolean;
   readonly body: string;
+  readonly at: number;
+  readonly diagnostics?: readonly TypstDiagnostic[];
 }
 
 const previewCache = new Map<string, PreviewEntry>();
@@ -38,7 +41,12 @@ async function compileSnippet(src: string, mode: TypstSnippetMode): Promise<Prev
     return inFlight;
   }
   const job = fetchTypstSvg(src, mode).then((result) => {
-    const entry: PreviewEntry = { ok: result.ok, body: result.body };
+    const entry: PreviewEntry = {
+      ok: result.ok,
+      body: result.body,
+      at: result.at,
+      ...(result.diagnostics !== undefined ? { diagnostics: result.diagnostics } : {}),
+    };
     previewCache.set(key, entry);
     pending.delete(key);
     return entry;
@@ -67,19 +75,96 @@ export const previewKeysField = StateField.define<PreviewState>({
   },
 });
 
-function fillTip(tip: HTMLElement, entry: PreviewEntry, mode: TypstSnippetMode): void {
+function formatStamp(at: number): string {
+  const time = new Date(at).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+  return `api call made ${time}`;
+}
+
+function appendDiagnostic(tip: HTMLElement, diagnostic: TypstDiagnostic, srcLines: readonly string[]): void {
+  const block = document.createElement("div");
+  block.className = "cm-typst-diag";
+
+  const message = document.createElement("div");
+  message.className = "cm-typst-diag-msg";
+  message.textContent = `${diagnostic.severity}: ${diagnostic.message}`;
+  block.appendChild(message);
+
+  if (diagnostic.line !== null) {
+    const where = document.createElement("div");
+    where.className = "cm-typst-diag-loc";
+    where.textContent =
+      diagnostic.column !== null
+        ? `line ${diagnostic.line}, column ${diagnostic.column} of your snippet`
+        : `line ${diagnostic.line} of your snippet`;
+    block.appendChild(where);
+
+    const text = srcLines[diagnostic.line - 1];
+    if (text !== undefined) {
+      const pre = document.createElement("pre");
+      pre.className = "cm-typst-diag-src";
+      pre.textContent = text;
+      if (diagnostic.column !== null) {
+        const caretCount =
+          diagnostic.length !== null && diagnostic.length > 0 ? diagnostic.length : 1;
+        const caret = document.createElement("span");
+        caret.className = "cm-typst-diag-caret";
+        caret.textContent = `\n${" ".repeat(Math.max(diagnostic.column - 1, 0))}${"^".repeat(caretCount)}`;
+        pre.appendChild(caret);
+      }
+      block.appendChild(pre);
+    }
+  }
+
+  for (const hint of diagnostic.hints) {
+    const hintEl = document.createElement("div");
+    hintEl.className = "cm-typst-diag-hint";
+    hintEl.textContent = `hint: ${hint}`;
+    block.appendChild(hintEl);
+  }
+
+  tip.appendChild(block);
+}
+
+function fillTip(
+  badge: HTMLElement,
+  tip: HTMLElement,
+  entry: PreviewEntry,
+  mode: TypstSnippetMode,
+  src: string,
+): void {
   tip.textContent = "";
+  const label = badge.querySelector(".cm-typst-preview-label");
+  if (label !== null) {
+    label.textContent = entry.ok ? "preview" : "error";
+  }
+  badge.classList.toggle("cm-typst-preview-has-error", !entry.ok);
+
   if (entry.ok) {
     const holder = document.createElement("span");
     holder.className = "cm-typst-preview-svg";
     holder.innerHTML = scaleSvgForPreview(entry.body, mode);
     tip.appendChild(holder);
+  } else if (entry.diagnostics !== undefined && entry.diagnostics.length > 0) {
+    const srcLines = src.split("\n");
+    for (const diagnostic of entry.diagnostics) {
+      appendDiagnostic(tip, diagnostic, srcLines);
+    }
   } else {
     const err = document.createElement("pre");
     err.className = "cm-typst-preview-error";
     err.textContent = entry.body;
     tip.appendChild(err);
   }
+
+  const stamp = document.createElement("div");
+  stamp.className = "cm-typst-preview-stamp";
+  stamp.textContent = formatStamp(entry.at);
+  tip.appendChild(stamp);
 }
 
 class TypstPreviewWidget extends WidgetType {
@@ -94,7 +179,11 @@ class TypstPreviewWidget extends WidgetType {
   override toDOM(): HTMLElement {
     const badge = document.createElement("span");
     badge.className = "cm-typst-preview";
-    badge.textContent = "preview";
+
+    const label = document.createElement("span");
+    label.className = "cm-typst-preview-label";
+    label.textContent = "preview";
+    badge.appendChild(label);
 
     const tip = document.createElement("span");
     tip.className = "cm-typst-preview-tip";
@@ -103,12 +192,12 @@ class TypstPreviewWidget extends WidgetType {
     const key = this.marker.key;
     const cached = previewCache.get(key);
     if (cached !== undefined) {
-      fillTip(tip, cached, this.marker.mode);
+      fillTip(badge, tip, cached, this.marker.mode, this.marker.src);
     } else {
       tip.textContent = "compiling\u2026";
       void compileSnippet(this.marker.src, this.marker.mode).then((entry) => {
         if (badge.isConnected) {
-          fillTip(tip, entry, this.marker.mode);
+          fillTip(badge, tip, entry, this.marker.mode, this.marker.src);
         }
       });
     }
@@ -204,6 +293,60 @@ const typstPreviewTheme: Extension = EditorView.baseTheme({
     whiteSpace: "pre-wrap",
     wordBreak: "break-word",
     maxWidth: "380px",
+  },
+  ".cm-typst-preview-has-error": {
+    color: "#a03c28",
+    border: "1px solid #a03c28",
+    fontWeight: "600",
+  },
+  ".cm-typst-diag": {
+    maxWidth: "420px",
+    fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace',
+    fontSize: "11px",
+    color: "#2b2822",
+    whiteSpace: "normal",
+  },
+  ".cm-typst-diag + .cm-typst-diag": {
+    marginTop: "8px",
+    paddingTop: "6px",
+    borderTop: "1px solid #e3ded2",
+  },
+  ".cm-typst-diag-msg": {
+    color: "#a03c28",
+    fontWeight: "600",
+    whiteSpace: "pre-wrap",
+  },
+  ".cm-typst-diag-loc": {
+    marginTop: "2px",
+    color: "#6f6a5e",
+  },
+  ".cm-typst-diag-src": {
+    margin: "4px 0 0",
+    padding: "4px 6px",
+    background: "#f1ede2",
+    borderRadius: "3px",
+    fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace',
+    fontSize: "11px",
+    whiteSpace: "pre",
+    overflowX: "auto",
+  },
+  ".cm-typst-diag-caret": {
+    color: "#a03c28",
+    fontWeight: "600",
+  },
+  ".cm-typst-diag-hint": {
+    marginTop: "3px",
+    color: "#6f6a5e",
+    whiteSpace: "pre-wrap",
+  },
+  ".cm-typst-preview-stamp": {
+    marginTop: "6px",
+    paddingTop: "4px",
+    borderTop: "1px solid #e3ded2",
+    color: "#8a8578",
+    fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace',
+    fontSize: "10px",
+    whiteSpace: "normal",
   },
 });
 
