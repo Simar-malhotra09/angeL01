@@ -5,8 +5,17 @@ import {
   type Extension,
   type EditorState,
 } from "@codemirror/state";
-import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view";
-import { findTypstMarkers, type TypstMarker, type TypstSnippetMode } from "../typst/extract";
+import {
+  Decoration,
+  type DecorationSet,
+  EditorView,
+  WidgetType,
+} from "@codemirror/view";
+import {
+  findTypstMarkers,
+  type TypstMarker,
+  type TypstSnippetMode,
+} from "../typst/extract";
 import { fetchTypstSvg } from "../typst/client";
 import { scaleSvgForPreview } from "../typst/svg-size";
 import type { TypstDiagnostic } from "../typst/diagnostics";
@@ -30,7 +39,10 @@ function cacheKey(mode: TypstSnippetMode, src: string): string {
   return `${mode}:${src}`;
 }
 
-async function compileSnippet(src: string, mode: TypstSnippetMode): Promise<PreviewEntry> {
+async function compileSnippet(
+  src: string,
+  mode: TypstSnippetMode,
+): Promise<PreviewEntry> {
   const key = cacheKey(mode, src);
   const cached = previewCache.get(key);
   if (cached !== undefined) {
@@ -45,7 +57,9 @@ async function compileSnippet(src: string, mode: TypstSnippetMode): Promise<Prev
       ok: result.ok,
       body: result.body,
       at: result.at,
-      ...(result.diagnostics !== undefined ? { diagnostics: result.diagnostics } : {}),
+      ...(result.diagnostics !== undefined
+        ? { diagnostics: result.diagnostics }
+        : {}),
     };
     previewCache.set(key, entry);
     pending.delete(key);
@@ -82,10 +96,14 @@ function formatStamp(at: number): string {
     second: "2-digit",
     hour12: true,
   });
-  return `api call made ${time}`;
+  return `Last updated: ${time}`;
 }
 
-function appendDiagnostic(tip: HTMLElement, diagnostic: TypstDiagnostic, srcLines: readonly string[]): void {
+function appendDiagnostic(
+  tip: HTMLElement,
+  diagnostic: TypstDiagnostic,
+  srcLines: readonly string[],
+): void {
   const block = document.createElement("div");
   block.className = "cm-typst-diag";
 
@@ -110,7 +128,9 @@ function appendDiagnostic(tip: HTMLElement, diagnostic: TypstDiagnostic, srcLine
       pre.textContent = text;
       if (diagnostic.column !== null) {
         const caretCount =
-          diagnostic.length !== null && diagnostic.length > 0 ? diagnostic.length : 1;
+          diagnostic.length !== null && diagnostic.length > 0
+            ? diagnostic.length
+            : 1;
         const caret = document.createElement("span");
         caret.className = "cm-typst-diag-caret";
         caret.textContent = `\n${" ".repeat(Math.max(diagnostic.column - 1, 0))}${"^".repeat(caretCount)}`;
@@ -233,7 +253,10 @@ export const typstPreviewDecorations = EditorView.decorations.compute(
   (state) => buildPreviewDecorations(state),
 );
 
-export function setTypstPreviews(view: EditorView, keys: ReadonlySet<string>): void {
+export function setTypstPreviews(
+  view: EditorView,
+  keys: ReadonlySet<string>,
+): void {
   view.dispatch({ effects: setTypstPreviewsEffect.of(keys) });
 }
 
