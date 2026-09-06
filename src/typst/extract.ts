@@ -1,3 +1,5 @@
+import { maskCodeFences } from "../markdown/code-blocks";
+
 export type TypstSnippetMode = "inline" | "display" | "doc";
 
 export interface ExtractedTypst {
@@ -87,6 +89,7 @@ export function findTypstMarkers(doc: string): TypstMarker[] {
   };
 
   consume(FENCED_RE, "doc", (src) => src.replace(/\n$/, ""));
+  masked = maskCodeFences(masked);
   consume(DISPLAY_RE, "display", (src) => src.trim());
   consume(INLINE_RE, "inline", (src) => src);
 

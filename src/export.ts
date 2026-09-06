@@ -1,6 +1,7 @@
 import type { EditorView } from "@codemirror/view";
 import { getImage } from "./image/image-store";
 import { renderMarkdownToHtml, escapeHtml, slugify, type TocHeading } from "./markdown/markdown-to-html";
+import { extractCodeBlocks, substituteCodeBlocks } from "./markdown/code-blocks";
 import {
   extractTypstSnippets,
   substituteTypst,
@@ -177,6 +178,17 @@ nav.x-toc a.x-toc-3 { padding-left: 24px; }
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.code-block {
+  margin: 1em 0;
+  padding: 10px 12px;
+  background: #e9e7e0;
+  border-radius: 6px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.88em;
+  line-height: 1.5;
+  overflow-x: auto;
+}
 `;
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -289,13 +301,15 @@ async function renderTypstSnippet(token: string, mode: TypstSnippetMode, src: st
 
 export async function exportDocumentAsHtml(view: EditorView, title: string): Promise<void> {
   const doc = view.state.doc.toString();
-  const { template, snippets } = extractTypstSnippets(doc);
+  const { template: fencedTemplate, blocks: codeBlocks } = extractCodeBlocks(doc);
+  const { template, snippets } = extractTypstSnippets(fencedTemplate);
   const swaps: TypstSwap[] = [];
   for (const snippet of snippets) {
     swaps.push(await renderTypstSnippet(snippet.token, snippet.mode, snippet.src));
   }
   const imageDataUrls = await resolveImageDataUrls(template);
   const { html: bodyHtml, headings } = renderMarkdownToHtml(template, (id) => imageDataUrls.get(id) ?? null);
+  const substituted = substituteCodeBlocks(substituteTypst(bodyHtml, swaps), codeBlocks);
   const filename = `${slugify(title)}.html`;
-  downloadHtmlFile(filename, buildHtmlDocument(title, substituteTypst(bodyHtml, swaps), renderToc(headings), doc));
+  downloadHtmlFile(filename, buildHtmlDocument(title, substituted, renderToc(headings), doc));
 }
