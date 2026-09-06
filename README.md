@@ -25,6 +25,8 @@ Example: This blog: [Who needs a runtime?](https://simar-malhotra09.github.io/wr
 
 Update log:
 
+[2026/Sep/6]: Code blocks. Write code inside triple-backtick fences (```python and friends) and the editor gives it a grey box with syntax highlighting and auto-closing brackets (brackets stay prose-normal outside blocks). Select text and press Cmd + Opt + G to wrap/unwrap a fence; adding the language after the opening fence turns on highlighting. Restyle the background with the --codeblock-bg variable in style.css. On export the block comes out as one grey pre block. Also fixed a typst clash: `$...$` or `$$...$$` typed *inside* a code fence used to get compiled as math and mangled the code — that no longer happens, in the editor previews or on export. Only ```typst fences go to typst now.
+
 [2026/Sep/5]: Fix typst errors in preview, Fix slider width overflow
 
 - Typst errors are now readable. When a snippet fails to compile, the badge flips from `preview` to a solid `error` one, so you can tell something broke without hovering. Hovering shows the error in plain form: the message, which line and column of _your_ snippet it points at (it used to point at a hidden wrapper file, which was useless), the line itself with a `^^^^` mark under the bad part, and typst's hints for fixing it. The tooltip also stamps the time the api call was made at the bottom, so you can tell whether the svg or error you're looking at still matches the code you have. On export, failed snippets come out in the html in the same plain format.
@@ -61,7 +63,7 @@ TODO:
   - [x] Styling with `*/**`: currently we can't style word with italics if it's a part of a bold sentence, ie, ** this is a _italicized_ word doesn't work**.
 
 - [x] Add support for typst errors in preview tooltip.
-- [x] Code blocks: fenced ``` blocks with greyish bkg (restyle via `--codeblock-bg`), syntax highlighting for ~140 languages (lazy-loaded), auto-closing brackets + pair-delete Backspace inside blocks only, and a Code Block command (Mod-Alt-g) that wraps/unwraps the selection.
+- [x] Code blocks: fenced ``` blocks with greyish bkg (restyle via `--codeblock-bg`), syntax highlighting for ~140 languages (lazy-loaded), auto-closing brackets + pair-delete Backspace inside blocks only, and a Code Block command (Mod-Alt-g) that wraps/unwraps the selection. On export they come out as one grey pre block; `$`/`$$` inside a non-typst fence stays code (only ```typst fences go to typst).
 - [ ] Being able to force-index lines/text content in the Toc sidebar: Currently only #/##/### header sections get an entry there.
 - [ ] UI oh god the UI; where is your taste?
 - [ ] Being able to write romaji underneath japanese text.
