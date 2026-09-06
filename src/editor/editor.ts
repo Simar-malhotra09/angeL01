@@ -17,7 +17,7 @@ import {
 import { search, searchKeymap } from "@codemirror/search";
 import { saveDraft, putText, pushDoc, Status, type Doc } from "../storage";
 import { Vim, vim, getCM } from "@replit/codemirror-vim";
-import { resolveTypographyInsert } from "../markdown/smart-typography";
+import { codeBlockBackspace, codeBlockExtensions } from "./code-block";
 import { urlHoverTooltip, findLinkAt } from "../tooltip/url-tooltip";
 import { markdownDecorations } from "./formatting-decorations";
 import { imageHoverTooltip } from "../tooltip/image-tooltip";
@@ -174,29 +174,6 @@ export function createEditor(
     }
   });
 
-  const smartTypographyHandler = EditorView.inputHandler.of(
-    (view, from, to, text) => {
-      if (from !== to || text.length !== 1) {
-        return false;
-      }
-      const docBefore = view.state.doc.sliceString(0, from);
-      const replacement = resolveTypographyInsert(docBefore, from, text);
-      if (replacement === null) {
-        return false;
-      }
-      view.dispatch({
-        changes: {
-          from: replacement.from,
-          to: replacement.to,
-          insert: replacement.text,
-        },
-        selection: { anchor: replacement.from + replacement.text.length },
-        userEvent: "input.type",
-      });
-      return true;
-    },
-  );
-
   async function saveDoc(cm: { getValue: () => string }): Promise<Doc> {
     const docID = getDocID();
     const content = cm.getValue();
@@ -319,6 +296,10 @@ export function createEditor(
           return true;
         },
       },
+      {
+        key: "Backspace",
+        run: codeBlockBackspace,
+      },
     ]),
     keymap.of([
       ...defaultKeymap,
@@ -335,7 +316,7 @@ export function createEditor(
     search(),
     urlHoverTooltip,
     imageHoverTooltip,
-    smartTypographyHandler,
+    ...codeBlockExtensions,
     markdownDecorations,
     imageEmbed,
     typstPreviewExtension,

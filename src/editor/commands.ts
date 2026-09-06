@@ -5,6 +5,7 @@ import {
   toggleItalic,
   makeToggleHeading,
   insertLink,
+  toggleCodeBlock,
 } from "./formatting-commands";
 import { encloseSelection } from "./enclose-command";
 import { BUCKETS, type BucketId } from "../highlights/buckets";
@@ -112,6 +113,12 @@ export function createPaletteCommands(
       label: "Insert Link",
       keys: "Mod-Alt-k",
       run: insertLink,
+    },
+    {
+      id: "code-block",
+      label: "Code Block",
+      keys: "Mod-Alt-g",
+      run: toggleCodeBlock,
     },
     {
       id: "enclose-selection",

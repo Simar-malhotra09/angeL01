@@ -3,6 +3,7 @@
   --fg: #2b2822;
   --faint: #a39f92;
   --accent: #b5624a;
+  --codeblock-bg: #e9e7e0;
 }
 
 * {
@@ -285,6 +286,24 @@ body {
 .cm-md-link-label {
   color: var(--accent);
   border-bottom: 1px dotted var(--accent);
+}
+
+.cm-md-codeblock {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.88em;
+  background-color: var(--codeblock-bg);
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.cm-md-codeblock-start {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+
+.cm-md-codeblock-end {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
 }
 
 .cm-image-tooltip {

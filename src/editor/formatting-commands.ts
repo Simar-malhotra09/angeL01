@@ -1,5 +1,7 @@
 import { EditorSelection } from "@codemirror/state";
 import type { Command } from "@codemirror/view";
+import { syntaxTree } from "@codemirror/language";
+import { isInCodeBlock } from "./code-block";
 import { parseHeading } from "../markdown/headings";
 
 const BOLD_MARK = "**";
@@ -91,5 +93,43 @@ export const insertLink: Command = (view) => {
   });
 
   view.dispatch(state.update(changes));
+  return true;
+};
+
+const FENCE_LINE_RE = /^\s*`{3,}/;
+
+export const toggleCodeBlock: Command = (view) => {
+  const { state } = view;
+  const doc = state.doc;
+  const main = state.selection.main;
+
+  if (isInCodeBlock(state, main.head) && isInCodeBlock(state, main.anchor)) {
+    let node = syntaxTree(state).resolveInner(main.head, -1);
+    while (node && node.name !== "FencedCode") {
+      node = node.parent!;
+    }
+    if (node) {
+      const changes = [];
+      const openLine = doc.lineAt(node.from);
+      const closeLine = doc.lineAt(node.to);
+      const closeIsFence =
+        closeLine.number !== openLine.number && FENCE_LINE_RE.test(closeLine.text);
+      if (closeIsFence) {
+        changes.push({ from: closeLine.from - 1, to: closeLine.to });
+      }
+      changes.push({ from: openLine.from, to: Math.min(openLine.to + 1, doc.length) });
+      view.dispatch(state.update({ changes: state.changes(changes) }));
+      return true;
+    }
+  }
+
+  const fromLine = doc.lineAt(main.from);
+  const toLine = doc.lineAt(main.to);
+  const original = doc.sliceString(fromLine.from, toLine.to);
+  const insert = "```\n" + original + "\n```";
+  view.dispatch({
+    changes: { from: fromLine.from, to: toLine.to, insert },
+    selection: EditorSelection.range(main.anchor + 4, main.head + 4),
+  });
   return true;
 };

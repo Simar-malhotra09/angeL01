@@ -6,6 +6,7 @@ import {
   ViewPlugin,
   type ViewUpdate,
 } from "@codemirror/view";
+import { syntaxTree } from "@codemirror/language";
 import { getCM } from "@replit/codemirror-vim";
 import { parseHeading } from "../markdown/headings";
 import { LINK_RE } from "../markdown/links";
@@ -13,6 +14,18 @@ import { LINK_RE } from "../markdown/links";
 const markDeco = Decoration.mark({ class: "cm-md-mark" });
 const hiddenDeco = Decoration.replace({});
 const boldTextDeco = Decoration.mark({ class: "cm-md-bold" });
+const codeBlockDecos = {
+  plain: Decoration.line({ class: "cm-md-codeblock" }),
+  start: Decoration.line({
+    class: "cm-md-codeblock cm-md-codeblock-start",
+  }),
+  end: Decoration.line({
+    class: "cm-md-codeblock cm-md-codeblock-end",
+  }),
+  solo: Decoration.line({
+    class: "cm-md-codeblock cm-md-codeblock-start cm-md-codeblock-end",
+  }),
+};
 const italicTextDeco = Decoration.mark({ class: "cm-md-italic" });
 const imageLabelDeco = Decoration.mark({ class: "cm-md-image-label" });
 const linkLabelDeco = Decoration.mark({ class: "cm-md-link-label" });
@@ -124,15 +137,64 @@ function collectLineSpecs(
   return specs;
 }
 
+interface FenceRange {
+  from: number;
+  to: number;
+  openLine: number;
+  closeLine: number;
+}
+
+function collectFences(view: EditorView): FenceRange[] {
+  const fences: FenceRange[] = [];
+  const tree = syntaxTree(view.state);
+  for (const { from, to } of view.visibleRanges) {
+    tree.iterate({
+      from,
+      to,
+      enter: (node) => {
+        if (node.name !== "FencedCode") {
+          return;
+        }
+        fences.push({
+          from: node.from,
+          to: node.to,
+          openLine: view.state.doc.lineAt(node.from).number,
+          closeLine: view.state.doc.lineAt(node.to).number,
+        });
+        return false;
+      },
+    });
+  }
+  return fences;
+}
+
 function buildDecorations(view: EditorView): DecorationSet {
   const specs: DecoSpec[] = [];
   const selectionRanges = view.state.selection.ranges;
+  const fences = collectFences(view);
 
   for (const { from, to } of view.visibleRanges) {
     let pos = from;
     while (pos <= to) {
       const line = view.state.doc.lineAt(pos);
-      specs.push(...collectLineSpecs(line.from, line.to, line.text, selectionRanges));
+      const fence = fences.find(
+        (candidate) => line.from >= candidate.from && line.from <= candidate.to,
+      );
+      if (fence !== undefined) {
+        let deco = codeBlockDecos.plain;
+        if (line.number === fence.openLine && line.number === fence.closeLine) {
+          deco = codeBlockDecos.solo;
+        } else if (line.number === fence.openLine) {
+          deco = codeBlockDecos.start;
+        } else if (line.number === fence.closeLine) {
+          deco = codeBlockDecos.end;
+        }
+        specs.push({ from: line.from, to: line.from, deco });
+      } else {
+        specs.push(
+          ...collectLineSpecs(line.from, line.to, line.text, selectionRanges),
+        );
+      }
       pos = line.to + 1;
     }
   }

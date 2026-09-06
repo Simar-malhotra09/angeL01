@@ -61,6 +61,7 @@ TODO:
   - [x] Styling with `*/**`: currently we can't style word with italics if it's a part of a bold sentence, ie, ** this is a _italicized_ word doesn't work**.
 
 - [x] Add support for typst errors in preview tooltip.
+- [x] Code blocks: fenced ``` blocks with greyish bkg (restyle via `--codeblock-bg`), syntax highlighting for ~140 languages (lazy-loaded), auto-closing brackets + pair-delete Backspace inside blocks only, and a Code Block command (Mod-Alt-g) that wraps/unwraps the selection.
 - [ ] Being able to force-index lines/text content in the Toc sidebar: Currently only #/##/### header sections get an entry there.
 - [ ] UI oh god the UI; where is your taste?
 - [ ] Being able to write romaji underneath japanese text.
