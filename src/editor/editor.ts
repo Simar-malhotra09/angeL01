@@ -7,7 +7,12 @@ import {
   scrollPastEnd,
   type ViewUpdate,
 } from "@codemirror/view";
-import { Compartment, EditorState, type Extension } from "@codemirror/state";
+import {
+  Compartment,
+  EditorState,
+  Prec,
+  type Extension,
+} from "@codemirror/state";
 import {
   defaultKeymap,
   history,
@@ -18,6 +23,10 @@ import { search, searchKeymap } from "@codemirror/search";
 import { saveDraft, putText, pushDoc, Status, type Doc } from "../storage";
 import { Vim, vim, getCM } from "@replit/codemirror-vim";
 import { codeBlockBackspace, codeBlockExtensions } from "./code-block";
+import {
+  continueIndentEnter,
+  deleteIndentLevelBackspace,
+} from "./indent-continue";
 import { urlHoverTooltip, findLinkAt } from "../tooltip/url-tooltip";
 import { markdownDecorations } from "./formatting-decorations";
 import { imageHoverTooltip } from "../tooltip/image-tooltip";
@@ -300,7 +309,19 @@ export function createEditor(
         key: "Backspace",
         run: codeBlockBackspace,
       },
+      {
+        key: "Backspace",
+        run: deleteIndentLevelBackspace,
+      },
     ]),
+    Prec.high(
+      keymap.of([
+        {
+          key: "Enter",
+          run: continueIndentEnter,
+        },
+      ]),
+    ),
     keymap.of([
       ...defaultKeymap,
       ...historyKeymap,
