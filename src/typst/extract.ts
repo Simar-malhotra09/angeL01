@@ -13,7 +13,9 @@ export interface TypstSnippet {
   src: string;
 }
 
-const FENCED_RE = /```typst\r?\n([\s\S]*?)```/g;
+// Trailing spaces after ```typst are fine — the editor's own fence parsing
+// tolerates them, so extraction must too or the block silently stays raw.
+const FENCED_RE = /```typst[^\S\n]*\r?\n([\s\S]*?)```/g;
 const DISPLAY_RE = /\$\$([\s\S]+?)\$\$/g;
 const INLINE_RE = /\$([^$\n]+?)\$/g;
 

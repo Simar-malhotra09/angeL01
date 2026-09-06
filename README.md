@@ -25,7 +25,7 @@ Example: This blog: [Who needs a runtime?](https://simar-malhotra09.github.io/wr
 
 Update log:
 
-[2026/Sep/6]: Code blocks. Write code inside triple-backtick fences (```python and friends) and the editor gives it a grey box with syntax highlighting and auto-closing brackets (brackets stay prose-normal outside blocks). Select text and press Cmd + Opt + G to wrap/unwrap a fence; adding the language after the opening fence turns on highlighting. Restyle the background with the --codeblock-bg variable in style.css. On export the block comes out as one grey pre block. Also fixed a typst clash: `$...$` or `$$...$$` typed *inside* a code fence used to get compiled as math and mangled the code — that no longer happens, in the editor previews or on export. Only ```typst fences go to typst now.
+[2026/Sep/6]: Code blocks. Write code inside triple-backtick fences (```python and friends) and the editor gives it a grey box with syntax highlighting and auto-closing brackets (brackets stay prose-normal outside blocks). Select text and press Cmd + Opt + G to wrap/unwrap a fence; adding the language after the opening fence turns on highlighting. Restyle the background with the --codeblock-bg variable in style.css. On export the block comes out as one grey pre block. Also fixed a typst clash: `$...$` or `$$...$$` typed *inside* a code fence used to get compiled as math and mangled the code — that no longer happens, in the editor previews or on export. Only ```typst fences go to typst now. Export fence matching also tolerates trailing spaces after the language and up to three leading spaces before the fence (before, a fence like ```python␣ with a stray trailing space exported as raw backticks).
 
 [2026/Sep/5]: Fix typst errors in preview, Fix slider width overflow
 

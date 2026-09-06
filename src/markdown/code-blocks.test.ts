@@ -50,3 +50,33 @@ test("maskCodeFences keeps line count and blanks fence content", () => {
   expect(masked.startsWith("text\n")).toBe(true);
   expect(masked.endsWith("\nmore")).toBe(true);
 });
+
+test("trailing spaces after the info string still match", () => {
+  const { template, blocks } = extractCodeBlocks(
+    "Before\n```python \ndef hello_world(s: str):\n    print(f'Hello world @{s}')\n```\nAfter",
+  );
+  expect(blocks).toHaveLength(1);
+  expect(blocks[0]!.lang).toBe("python");
+
+  const { html } = renderMarkdownToHtml(template, () => null);
+  const result = substituteCodeBlocks(html, blocks);
+  expect(result).toContain('<pre class="code-block"><code class="language-python">');
+  expect(result).not.toContain("```python");
+});
+
+test("fences indented up to three spaces still match", () => {
+  const { blocks } = extractCodeBlocks("  ```js\nlet a = 1;\n  ```");
+  expect(blocks).toHaveLength(1);
+  expect(blocks[0]!.lang).toBe("js");
+  expect(blocks[0]!.src).toBe("let a = 1;");
+});
+
+test("trailing-space typst fence still reaches the typst pipeline", () => {
+  const { template, blocks } = extractCodeBlocks("```typst \n#strong[hi]\n```");
+  expect(blocks).toHaveLength(0);
+
+  const { snippets } = extractTypstSnippets(template);
+  expect(snippets).toHaveLength(1);
+  expect(snippets[0]!.mode).toBe("doc");
+  expect(snippets[0]!.src).toBe("#strong[hi]");
+});

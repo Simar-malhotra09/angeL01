@@ -13,8 +13,10 @@ export interface ExtractedCodeBlocks {
 
 // Mirrors the typst FENCED_RE shape, but matches any language. Extraction must
 // run before typst extraction so `$`/`$$` inside code stays literal, and must
-// leave ```typst fences in place for the typst pipeline.
-const CODE_FENCE_RE = /```([A-Za-z]*)\r?\n([\s\S]*?)```/g;
+// leave ```typst fences in place for the typst pipeline. Line-anchored like the
+// markdown parser: the fence line may be indented up to 3 spaces, the info
+// string is one whitespace-free token, and trailing spaces after it are fine.
+const CODE_FENCE_RE = /^ {0,3}```([^\s`]*)[^\S\n]*\r?\n([\s\S]*?)^ {0,3}```[^\S\n]*$/gm;
 
 export function extractCodeBlocks(doc: string): ExtractedCodeBlocks {
   const blocks: CodeBlockSnippet[] = [];
