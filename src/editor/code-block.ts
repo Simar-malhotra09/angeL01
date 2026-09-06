@@ -3,13 +3,9 @@ import { EditorView } from "@codemirror/view";
 import { closeBrackets, deleteBracketPair } from "@codemirror/autocomplete";
 import { markdown } from "@codemirror/lang-markdown";
 import { languages } from "@codemirror/language-data";
-import {
-  HighlightStyle,
-  syntaxHighlighting,
-  syntaxTree,
-} from "@codemirror/language";
-import { tags } from "@lezer/highlight";
+import { syntaxHighlighting, syntaxTree } from "@codemirror/language";
 import type { Command } from "@codemirror/view";
+import { codeHighlightStyle } from "../markdown/code-highlight";
 import { resolveTypographyInsert } from "../markdown/smart-typography";
 
 export function isInCodeBlock(state: EditorState, pos: number): boolean {
@@ -25,20 +21,6 @@ export function isInCodeBlock(state: EditorState, pos: number): boolean {
   }
   return false;
 }
-
-const codeHighlightStyle = HighlightStyle.define([
-  { tag: tags.comment, color: "var(--faint)" },
-  { tag: tags.keyword, color: "var(--accent)" },
-  { tag: tags.string, color: "#6a7a43" },
-  { tag: tags.regexp, color: "#8a5a68" },
-  { tag: tags.number, color: "#2f6f8f" },
-  { tag: [tags.bool, tags.atom, tags.null], color: "#8a5a2b" },
-  { tag: tags.function(tags.variableName), color: "#4d5b8f" },
-  { tag: [tags.typeName, tags.className], color: "#8a6d3b" },
-  { tag: tags.propertyName, color: "#50706a" },
-  { tag: tags.operator, color: "#6b6353" },
-  { tag: tags.labelName, color: "#8a5db0" },
-]);
 
 // Chars that closeBrackets would pair (or skip over) with its default
 // config. Outside code blocks we type them plain, so quotes/dashes can

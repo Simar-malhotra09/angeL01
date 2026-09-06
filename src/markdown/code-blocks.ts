@@ -42,18 +42,19 @@ export function maskCodeFences(doc: string): string {
   return doc.replace(CODE_FENCE_RE, (full) => full.replace(/[^\n]/g, " "));
 }
 
-function codeBlockHtml(block: CodeBlockSnippet): string {
+function codeBlockHtml(block: CodeBlockSnippet, inner?: string): string {
   const langClass = block.lang !== "" ? ` class="language-${block.lang}"` : "";
-  return `<pre class="code-block"><code${langClass}>${escapeHtml(block.src)}</code></pre>`;
+  return `<pre class="code-block"><code${langClass}>${inner ?? escapeHtml(block.src)}</code></pre>`;
 }
 
 export function substituteCodeBlocks(
   html: string,
   blocks: readonly CodeBlockSnippet[],
+  highlighted?: ReadonlyMap<string, string>,
 ): string {
   let result = html;
   for (const block of blocks) {
-    const pre = codeBlockHtml(block);
+    const pre = codeBlockHtml(block, highlighted?.get(block.token));
     result = result.replace(`<p>${block.token}</p>`, pre);
     result = result.replaceAll(block.token, pre);
   }

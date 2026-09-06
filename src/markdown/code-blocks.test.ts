@@ -80,3 +80,12 @@ test("trailing-space typst fence still reaches the typst pipeline", () => {
   expect(snippets[0]!.mode).toBe("doc");
   expect(snippets[0]!.src).toBe("#strong[hi]");
 });
+
+test("provided highlighted spans fill in the pre block", () => {
+  const { blocks } = extractCodeBlocks("```python\nprint(1)\n```");
+  const highlighted = new Map([[blocks[0]!.token, '<span class="tok-keyword">print</span>']]);
+  const result = substituteCodeBlocks(`<p>${blocks[0]!.token}</p>`, blocks, highlighted);
+  expect(result).toContain(
+    '<pre class="code-block"><code class="language-python"><span class="tok-keyword">print</span></code></pre>',
+  );
+});

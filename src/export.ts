@@ -2,6 +2,7 @@ import type { EditorView } from "@codemirror/view";
 import { getImage } from "./image/image-store";
 import { renderMarkdownToHtml, escapeHtml, slugify, type TocHeading } from "./markdown/markdown-to-html";
 import { extractCodeBlocks, substituteCodeBlocks } from "./markdown/code-blocks";
+import { codeHighlightCss, highlightCodeHtml } from "./markdown/code-highlight";
 import {
   extractTypstSnippets,
   substituteTypst,
@@ -189,6 +190,7 @@ nav.x-toc a.x-toc-3 { padding-left: 24px; }
   line-height: 1.5;
   overflow-x: auto;
 }
+${codeHighlightCss()}
 `;
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -307,9 +309,16 @@ export async function exportDocumentAsHtml(view: EditorView, title: string): Pro
   for (const snippet of snippets) {
     swaps.push(await renderTypstSnippet(snippet.token, snippet.mode, snippet.src));
   }
+  const highlighted = new Map<string, string>();
+  for (const block of codeBlocks) {
+    const inner = await highlightCodeHtml(block.lang, block.src);
+    if (inner !== null) {
+      highlighted.set(block.token, inner);
+    }
+  }
   const imageDataUrls = await resolveImageDataUrls(template);
   const { html: bodyHtml, headings } = renderMarkdownToHtml(template, (id) => imageDataUrls.get(id) ?? null);
-  const substituted = substituteCodeBlocks(substituteTypst(bodyHtml, swaps), codeBlocks);
+  const substituted = substituteCodeBlocks(substituteTypst(bodyHtml, swaps), codeBlocks, highlighted);
   const filename = `${slugify(title)}.html`;
   downloadHtmlFile(filename, buildHtmlDocument(title, substituted, renderToc(headings), doc));
 }
