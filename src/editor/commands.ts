@@ -8,6 +8,7 @@ import {
   toggleCodeBlock,
 } from "./formatting-commands";
 import { encloseSelection } from "./enclose-command";
+import { annotateRomaji } from "./romaji-command";
 import { BUCKETS, type BucketId } from "../highlights/buckets";
 import { toggleHighlightCardLayout } from "../highlights/card-layout";
 import {
@@ -125,6 +126,12 @@ export function createPaletteCommands(
       label: "Enclose Selection",
       keys: "Mod-Alt-s",
       run: encloseSelection,
+    },
+    {
+      id: "romaji-annotate",
+      label: "Romaji Annotate",
+      keys: "Mod-Alt-r",
+      run: annotateRomaji,
     },
     {
       id: "insert-image",

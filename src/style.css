@@ -288,6 +288,11 @@ body {
   border-bottom: 1px dotted var(--accent);
 }
 
+.cm-md-romaji {
+  font-size: 0.8em;
+  color: var(--faint);
+}
+
 .cm-md-codeblock {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.88em;

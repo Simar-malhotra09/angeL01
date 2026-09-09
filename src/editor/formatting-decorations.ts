@@ -29,6 +29,7 @@ const codeBlockDecos = {
 const italicTextDeco = Decoration.mark({ class: "cm-md-italic" });
 const imageLabelDeco = Decoration.mark({ class: "cm-md-image-label" });
 const linkLabelDeco = Decoration.mark({ class: "cm-md-link-label" });
+const romajiTextDeco = Decoration.mark({ class: "cm-md-romaji" });
 const headingLineDeco = [1, 2, 3].map((level) =>
   Decoration.line({ class: `cm-md-heading-${level}` }),
 );
@@ -42,6 +43,7 @@ function normalizeUnderscoreItalics(lineText: string): string {
   return lineText.replace(UNDERSCORE_ITALIC_RE, (_match, inner: string) => `*${inner}*`);
 }
 const IMAGE_RE = /!\[([^\]]*)\]\(image:[a-zA-Z0-9-]+\)/g;
+const RUBY_RE = /\{([^{}|\n]+)\|([^{}|\n]*)\}/g;
 
 interface DecoSpec {
   from: number;
@@ -132,6 +134,25 @@ function collectLineSpecs(
       { from: labelStart, to: labelEnd, deco: linkLabelDeco },
       { from: labelEnd, to: end, deco: markerDeco(active) },
     );
+  }
+
+  RUBY_RE.lastIndex = 0;
+  while ((match = RUBY_RE.exec(lineText)) !== null) {
+    const start = lineFrom + match.index;
+    const baseStart = start + 1;
+    const baseEnd = baseStart + match[1]!.length;
+    const romajiStart = baseEnd + 1;
+    const romajiEnd = romajiStart + match[2]!.length;
+    const end = romajiEnd + 1;
+    const active = touchesSelection(selectionRanges, start, end);
+    specs.push(
+      { from: start, to: baseStart, deco: markerDeco(active) },
+      { from: baseEnd, to: romajiStart, deco: markerDeco(active) },
+      { from: romajiEnd, to: end, deco: markerDeco(active) },
+    );
+    if (romajiEnd > romajiStart) {
+      specs.push({ from: romajiStart, to: romajiEnd, deco: romajiTextDeco });
+    }
   }
 
   return specs;

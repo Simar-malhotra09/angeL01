@@ -5,6 +5,7 @@ import { Status, type Doc, type DocSummary } from "./storage";
 import { isSupportedImageType } from "./image/image-format";
 import { isValidId } from "./id";
 import { compileTypst } from "./typst/compile";
+import { convertToRomaji } from "./romaji/convert";
 
 const db = new Database("angel01.sqlite");
 
@@ -181,6 +182,19 @@ const server = Bun.serve({
         return new Response(result.svg, {
           headers: { "content-type": "image/svg+xml" },
         });
+      },
+    },
+    "/api/romaji": {
+      POST: async (req) => {
+        const body = (await req.json()) as { text?: unknown };
+        if (typeof body.text !== "string") {
+          return new Response("Expected { text: string }", { status: 400 });
+        }
+        const result = await convertToRomaji(body.text);
+        if (!result.ok) {
+          return Response.json({ detail: result.detail }, { status: 422 });
+        }
+        return Response.json({ romaji: result.romaji });
       },
     },
   },

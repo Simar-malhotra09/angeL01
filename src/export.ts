@@ -152,6 +152,14 @@ nav.x-toc a.x-toc-3 { padding-left: 24px; }
   color: #b5624a;
 }
 
+ruby {
+  ruby-position: under;
+}
+rt {
+  font-size: 55%;
+  color: #6b675c;
+}
+
 .typst-inline svg {
   height: 1.05em;
   width: auto;
