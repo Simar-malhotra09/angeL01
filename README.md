@@ -20,10 +20,13 @@ That is it.
   - `$ ... $` for math inline in a sentence
   - `$$ ... $$` for a centred math block
   - ` ```typst ` blocks for full Typst excerpts
+- Romaji under Japanese text: select a word/phrase, `Cmd + Opt + R`, and the romaji reading is inserted next to it (needs `cutlet` installed — `pipx install cutlet && pipx inject cutlet unidic-lite`). The romaji is plain text you can edit. On HTML export it renders as real `<ruby>` with the romaji under the Japanese.
 
 Example: This blog: [Who needs a runtime?](https://simar-malhotra09.github.io/writing/documents/who-needs-a-runtime.html) was written using angel.
 
 Update log:
+
+[2026/Sep/8]: Romaji annotations. Select a Japanese word or phrase and press Cmd + Opt + R (Romaji Annotate in the command palette) to put its romaji reading right after it as `{漢字|kanji}` — the braces and pipe hide until your cursor enters them, and the romaji shows smaller so it reads as an annotation, not body text. The reading comes from `cutlet` (one-time install: `pipx install cutlet && pipx inject cutlet unidic-lite`; without it the command leaves your text alone and logs the install line to the console). It's stored as plain text so you can fix it by hand, and on HTML export each annotation becomes a real `<ruby>` element with the romaji under the Japanese in a smaller font.
 
 [2026/Sep/6]: Outline indentation. Indented lines now behave like a code editor: pressing Enter on an indented line keeps the same indentation on the next line, so hand-laid-out outlines stay aligned without re-counting spaces. Numbered headings you maintain by hand continue themselves — Enter after "10.1. some sub point" starts the next line with "10.2." at the same indent (works at any depth, and at column zero "10. ..." becomes "11. ..."). To step out, press Enter on an empty indented line (the indent is dropped and the cursor starts at column zero), press Enter again right after a lone "10.2." marker to cancel the numbering, or Shift-Tab to dedent the current line one level (Tab indents). Backspace on a line where only spaces sit before the cursor now deletes one whole indent level per press instead of a single space. Code blocks are untouched: inside a fence Enter and Backspace behave as before.
 
@@ -68,7 +71,7 @@ TODO:
 - [x] Code blocks: fenced ``` blocks with greyish bkg (restyle via `--codeblock-bg`), syntax highlighting for ~140 languages (lazy-loaded), auto-closing brackets + pair-delete Backspace inside blocks only, and a Code Block command (Mod-Alt-g) that wraps/unwraps the selection. On export they come out as one grey pre block; `$`/`$$` inside a non-typst fence stays code (only ```typst fences go to typst).
 - [ ] Being able to force-index lines/text content in the Toc sidebar: Currently only #/##/### header sections get an entry there.
 - [ ] UI oh god the UI; where is your taste?
-- [ ] Being able to write romaji underneath japanese text.
+- [x] Being able to write romaji underneath japanese text.
 - [x] Can we add, at the minimum, basic typst functionality? (done: rendered to SVG on HTML export)
 - [x] Add indents with Tab
 - [x] Be able to dynamically change the width of the 'text writeable canvas' through a bottom floating sleek horizonatal scrollbar? Max/Min?
