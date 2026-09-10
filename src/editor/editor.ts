@@ -9,6 +9,7 @@ import {
 } from "@codemirror/view";
 import {
   Compartment,
+  EditorSelection,
   EditorState,
   Prec,
   type Extension,
@@ -27,7 +28,8 @@ import {
   continueIndentEnter,
   deleteIndentLevelBackspace,
 } from "./indent-continue";
-import { urlHoverTooltip, findLinkAt } from "../tooltip/url-tooltip";
+import { urlHoverTooltip, findLinkAt, findAnchorTarget } from "../tooltip/url-tooltip";
+import { isInternalLink } from "../markdown/links";
 import { markdownDecorations } from "./formatting-decorations";
 import { imageHoverTooltip } from "../tooltip/image-tooltip";
 import { imageEmbed } from "./image-embed";
@@ -385,6 +387,19 @@ export function createEditor(
           return false;
         }
         event.preventDefault();
+        if (isInternalLink(link.url)) {
+          const target = findAnchorTarget(view.state.doc.toString(), link.url);
+          if (target !== null) {
+            view.dispatch({
+              selection: EditorSelection.cursor(target.from),
+              effects: EditorView.scrollIntoView(target.from, {
+                y: "start",
+                yMargin: 16,
+              }),
+            });
+          }
+          return true;
+        }
         window.open(link.url, "_blank", "noopener,noreferrer");
         return true;
       },

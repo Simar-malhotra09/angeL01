@@ -1,5 +1,5 @@
 import { parseHeading } from "./headings";
-import { LINK_RE } from "./links";
+import { LINK_RE, HeadingSlugger, isInternalLink } from "./links";
 
 export type ImageResolver = (imageId: string) => string | null;
 
@@ -36,15 +36,15 @@ export function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
-export function slugify(text: string): string {
-  const slug = text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return slug.length > 0 ? slug : "section";
-}
-
 function renderLinkSpan(label: string, url: string): string {
+  if (isInternalLink(url)) {
+    return (
+      `<span class="x-link">` +
+      `<a href="${escapeHtml(url)}">${escapeHtml(label)}</a>` +
+      `<span class="x-link-tooltip">Go to ${escapeHtml(url)}</span>` +
+      `</span>`
+    );
+  }
   return (
     `<span class="x-link">` +
     `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>` +
@@ -160,16 +160,13 @@ function renderLineInline(lineText: string, resolveImage: ImageResolver): string
 export function renderMarkdownToHtml(doc: string, resolveImage: ImageResolver): RenderedMarkdown {
   const blocks: string[] = [];
   const headings: TocHeading[] = [];
-  const slugCounts = new Map<string, number>();
+  const slugger = new HeadingSlugger();
 
   for (const lineText of doc.split("\n")) {
     const heading = parseHeading(lineText);
     if (heading !== null) {
       const plainText = stripInlineMarkdown(heading.text);
-      const baseSlug = slugify(plainText);
-      const seen = slugCounts.get(baseSlug) ?? 0;
-      slugCounts.set(baseSlug, seen + 1);
-      const slug = seen === 0 ? baseSlug : `${baseSlug}-${seen + 1}`;
+      const slug = slugger.slugFor(plainText);
 
       headings.push({ level: heading.level, text: plainText, slug });
       blocks.push(

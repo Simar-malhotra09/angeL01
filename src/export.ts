@@ -1,6 +1,7 @@
 import type { EditorView } from "@codemirror/view";
 import { getImage } from "./image/image-store";
-import { renderMarkdownToHtml, escapeHtml, slugify, type TocHeading } from "./markdown/markdown-to-html";
+import { renderMarkdownToHtml, escapeHtml, type TocHeading } from "./markdown/markdown-to-html";
+import { slugify } from "./markdown/links";
 import { extractCodeBlocks, substituteCodeBlocks } from "./markdown/code-blocks";
 import { codeHighlightCss, highlightCodeHtml } from "./markdown/code-highlight";
 import {
