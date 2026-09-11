@@ -1,4 +1,4 @@
-export const LINK_RE = /(?<!!)\[([^\]]+)\]\(((?:https?:\/\/|#)[^\s)]+)\)/g;
+export const LINK_RE = /(?<!!)\[([^\]]+)\]\((https?:\/\/[^\s)]+|#[^)]+)\)/g;
 
 export function isInternalLink(url: string): boolean {
   return url.startsWith("#");

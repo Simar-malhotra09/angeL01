@@ -1,5 +1,5 @@
 import { parseHeading } from "./headings";
-import { LINK_RE, HeadingSlugger, isInternalLink } from "./links";
+import { LINK_RE, HeadingSlugger, isInternalLink, slugify } from "./links";
 
 export type ImageResolver = (imageId: string) => string | null;
 
@@ -40,7 +40,7 @@ function renderLinkSpan(label: string, url: string): string {
   if (isInternalLink(url)) {
     return (
       `<span class="x-link">` +
-      `<a href="${escapeHtml(url)}">${escapeHtml(label)}</a>` +
+      `<a href="#${escapeHtml(slugify(url.slice(1)))}">${escapeHtml(label)}</a>` +
       `<span class="x-link-tooltip">Go to ${escapeHtml(url)}</span>` +
       `</span>`
     );

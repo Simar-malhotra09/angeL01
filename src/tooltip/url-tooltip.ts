@@ -1,7 +1,7 @@
 import { hoverTooltip, type Tooltip } from "@codemirror/view";
 import type { EditorView } from "@codemirror/view";
 import { getCoordsAtEnd } from "./tooltip-anchor";
-import { LINK_RE, HeadingSlugger, isInternalLink } from "../markdown/links";
+import { LINK_RE, HeadingSlugger, isInternalLink, slugify } from "../markdown/links";
 import { parseHeading } from "../markdown/headings";
 import { stripInlineMarkdown } from "../markdown/markdown-to-html";
 
@@ -42,7 +42,7 @@ export interface AnchorTarget {
 }
 
 export function findAnchorTarget(docText: string, anchor: string): AnchorTarget | null {
-  const target = anchor.slice(1);
+  const target = slugify(anchor.slice(1));
   const slugger = new HeadingSlugger();
   let pos = 0;
   for (const lineText of docText.split("\n")) {
