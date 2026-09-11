@@ -6,3 +6,7 @@ https://support.google.com/chrome/a/answer/2714278?hl=en
 To use: select text and press option/alt + C. This makes up our [text] part.
 If the selected text itself is linked, that will make up the (link) part, otherwise the current page url will be.
 Finally, what populates your clipboard is `[text](link)` formatted exactly the way angel expects! Saves a lot of time ngl
+
+Prefer the mouse? Select the text, right click it, and hit "Copy as Markdown link" — same thing.
+Either way you'll get a little popup in the bottom-right of the page: green "Copied" when it worked,
+red "Copy failed" if it didn't (then peek at the page console for the reason).
