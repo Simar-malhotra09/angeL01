@@ -124,6 +124,43 @@ async function main(): Promise<void> {
   view.scrollDOM.addEventListener("scroll", scheduleHighlightUpdate);
   window.addEventListener("resize", scheduleHighlightUpdate);
 
+  // bun's dev live-reloader hard-reloads the page whenever its socket
+  // reconnects (e.g. every time the tab regains focus), so remember the
+  // scroll spot per document and put the page back there after load.
+  const scrollKey = `angel01-scroll-${id}`;
+  const saveScroll = (): void => {
+    localStorage.setItem(scrollKey, String(view.scrollDOM.scrollTop));
+  };
+  let scrollSaveTimer: ReturnType<typeof setTimeout> | null = null;
+  view.scrollDOM.addEventListener("scroll", () => {
+    if (scrollSaveTimer !== null) {
+      return;
+    }
+    scrollSaveTimer = setTimeout(() => {
+      scrollSaveTimer = null;
+      saveScroll();
+    }, 250);
+  });
+  window.addEventListener("pagehide", saveScroll);
+
+  // typst previews and images keep resizing the page for a moment after
+  // load, so reapply the spot a few times — stopping early if the user
+  // scrolls on purpose.
+  const savedScroll = Number(localStorage.getItem(scrollKey));
+  if (savedScroll > 0) {
+    const restore = setInterval(() => {
+      view.scrollDOM.scrollTop = savedScroll;
+    }, 200);
+    const stopRestoring = (): void => clearInterval(restore);
+    setTimeout(stopRestoring, 3000);
+    view.scrollDOM.addEventListener("wheel", stopRestoring, { once: true });
+    view.scrollDOM.addEventListener("touchstart", stopRestoring, {
+      once: true,
+      passive: true,
+    });
+    document.addEventListener("keydown", stopRestoring, { once: true });
+  }
+
   // keep the centred text column clear of the fixed sidebars: the toc needs
   // 220px on the left (40 offset + 180 wide) and the highlight panel 240px
   // on the right, plus 80px of breathing room. Below 1100px the sidebars
