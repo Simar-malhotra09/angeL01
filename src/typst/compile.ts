@@ -32,6 +32,25 @@ export type TypstCompileResult = TypstCompileOk | TypstCompileErr;
 const CACHE_DIR = join(import.meta.dir, "..", "..", ".typst-cache");
 const MAX_SNIPPET_BYTES = 10_000;
 
+// The dev server is not always started from a login shell, so PATH can be
+// missing entries like ~/.nix-profile/bin that the user's terminal has.
+// Resolve the typst binary once, checking PATH first and then the locations
+// typst normally lands via nix, homebrew, or cargo.
+let typstBin: string | null | undefined;
+
+export function resolveTypstBin(): string | null {
+  if (typstBin !== undefined) return typstBin;
+  const home = process.env.HOME ?? "";
+  const candidates = [
+    ...(home ? [join(home, ".nix-profile/bin/typst"), join(home, ".cargo/bin/typst")] : []),
+    "/nix/var/nix/profiles/default/bin/typst",
+    "/opt/homebrew/bin/typst",
+    "/usr/local/bin/typst",
+  ];
+  typstBin = Bun.which("typst") ?? candidates.find((p) => existsSync(p)) ?? null;
+  return typstBin;
+}
+
 const PAGE_PREAMBLE = TYPST_PAGE_PREAMBLE;
 
 export function buildTypstSource(src: string, mode: TypstSnippetMode): string {
@@ -66,9 +85,19 @@ export async function compileTypst(src: string, mode: TypstSnippetMode): Promise
   const typPath = join(CACHE_DIR, `${hash}.typ`);
   writeFileSync(typPath, buildTypstSource(src, mode));
 
+  const bin = resolveTypstBin();
+  if (bin === null) {
+    unlinkSync(typPath);
+    return {
+      ok: false,
+      detail: "the typst command isn't installed or can't be found — install it (e.g. brew install typst) and reload",
+      diagnostics: [],
+    };
+  }
+
   const proc = Bun.spawn(
     [
-      "typst",
+      bin,
       "compile",
       "--format",
       "svg",
