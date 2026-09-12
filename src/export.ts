@@ -189,6 +189,31 @@ rt {
   word-break: break-word;
 }
 
+.x-image-block img,
+.typst-display svg,
+.typst-doc svg {
+  cursor: zoom-in;
+}
+.x-lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  align-items: center;
+  justify-content: center;
+  background: rgba(43, 40, 34, 0.82);
+}
+.x-lightbox.open {
+  display: flex;
+}
+.x-lightbox img,
+.x-lightbox svg {
+  background: #faf8f4;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: zoom-out;
+}
+
 .code-block {
   margin: 1em 0;
   padding: 10px 12px;
@@ -252,7 +277,7 @@ function renderToc(headings: readonly TocHeading[]): string {
   return `<nav class="x-toc">\n${links}\n</nav>`;
 }
 
-function buildHtmlDocument(title: string, bodyHtml: string, tocHtml: string, rawText: string): string {
+export function buildHtmlDocument(title: string, bodyHtml: string, tocHtml: string, rawText: string): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -278,6 +303,53 @@ document.getElementById("x-copy-btn").addEventListener("click", function (event)
     }, 1500);
   });
 });
+(function () {
+  var overlay = document.createElement("div");
+  overlay.className = "x-lightbox";
+  document.body.appendChild(overlay);
+  function closeZoom() {
+    overlay.classList.remove("open");
+    while (overlay.firstChild) {
+      overlay.removeChild(overlay.firstChild);
+    }
+  }
+  overlay.addEventListener("click", closeZoom);
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      closeZoom();
+    }
+  });
+  document
+    .querySelectorAll(".x-image-block img, .typst-display svg, .typst-doc svg")
+    .forEach(function (el) {
+      el.addEventListener("click", function () {
+        var w;
+        var h;
+        if (el.tagName === "svg") {
+          var box = el.viewBox && el.viewBox.baseVal;
+          if (!box || !box.width) {
+            return;
+          }
+          w = box.width;
+          h = box.height;
+        } else {
+          w = el.naturalWidth;
+          h = el.naturalHeight;
+          if (!w) {
+            return;
+          }
+        }
+        var scale = Math.min((window.innerWidth * 0.94) / w, (window.innerHeight * 0.9) / h);
+        var clone = el.cloneNode(false);
+        clone.style.width = Math.floor(w * scale) + "px";
+        clone.style.height = Math.floor(h * scale) + "px";
+        clone.style.maxWidth = "none";
+        closeZoom();
+        overlay.appendChild(clone);
+        overlay.classList.add("open");
+      });
+    });
+})();
 </script>
 </body>
 </html>
