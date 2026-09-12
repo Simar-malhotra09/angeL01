@@ -15,6 +15,10 @@ test("script wires click-to-zoom for images and block typst svgs", () => {
   expect(html).toContain("naturalWidth");
 });
 
+test("zoom clone is deep so svg children render in the popup", () => {
+  expect(html).toContain("cloneNode(true)");
+});
+
 test("clicking away or pressing escape closes the zoom", () => {
   expect(html).toContain('event.key === "Escape"');
   expect(html).toContain("closeZoom");

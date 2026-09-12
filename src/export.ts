@@ -340,7 +340,7 @@ document.getElementById("x-copy-btn").addEventListener("click", function (event)
           }
         }
         var scale = Math.min((window.innerWidth * 0.94) / w, (window.innerHeight * 0.9) / h);
-        var clone = el.cloneNode(false);
+        var clone = el.cloneNode(true);
         clone.style.width = Math.floor(w * scale) + "px";
         clone.style.height = Math.floor(h * scale) + "px";
         clone.style.maxWidth = "none";
