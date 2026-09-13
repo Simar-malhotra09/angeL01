@@ -23,7 +23,9 @@ db.exec(`
 // Non-destructive migration for databases created before the status column
 // existed. CREATE TABLE IF NOT EXISTS above won't add columns to an existing
 // table, so add the column explicitly when it is missing.
-const docColumns = db.query("PRAGMA table_info(docs)").all() as Array<{ name: string }>;
+const docColumns = db.query("PRAGMA table_info(docs)").all() as Array<{
+  name: string;
+}>;
 if (!docColumns.some((column) => column.name === "status")) {
   db.exec("ALTER TABLE docs ADD COLUMN status INTEGER NOT NULL DEFAULT 0");
 }
@@ -50,11 +52,16 @@ type DocSummaryRow = Omit<DocRow, "content">;
 
 type DocWrite = Pick<Doc, "title" | "content" | "createdAt" | "status">;
 
-const getDocStmt = db.query<DocRow, [string]>("SELECT * FROM docs WHERE id = ?");
+const getDocStmt = db.query<DocRow, [string]>(
+  "SELECT * FROM docs WHERE id = ?",
+);
 const listDocsStmt = db.query<DocSummaryRow, []>(
   "SELECT id, title, created_at, updated_at, status FROM docs ORDER BY updated_at DESC",
 );
-const upsertDocStmt = db.query<null, [string, string, string, number, number, number]>(`
+const upsertDocStmt = db.query<
+  null,
+  [string, string, string, number, number, number]
+>(`
   INSERT INTO docs (id, title, content, created_at, updated_at, status)
   VALUES (?, ?, ?, ?, ?, ?)
   ON CONFLICT(id) DO UPDATE SET
@@ -102,6 +109,7 @@ function rowToDocSummary(row: DocSummaryRow): DocSummary {
 }
 
 const server = Bun.serve({
+  port: Number(process.env.ANGEL_PORT) || 3030,
   routes: {
     "/": home,
     "/doc/:id": editor,
@@ -128,7 +136,14 @@ const server = Bun.serve({
         // content-only save never resets a document back to Draft.
         const existing = getDocStmt.get(req.params.id);
         const status = body.status ?? existing?.status ?? Status.Draft;
-        upsertDocStmt.run(req.params.id, body.title, body.content, body.createdAt, now, status);
+        upsertDocStmt.run(
+          req.params.id,
+          body.title,
+          body.content,
+          body.createdAt,
+          now,
+          status,
+        );
         return Response.json({ ok: true });
       },
       DELETE: (req) => {
@@ -145,7 +160,9 @@ const server = Bun.serve({
         if (row === null) {
           return new Response(null, { status: 404 });
         }
-        return new Response(new Blob([new Uint8Array(row.data)], { type: row.mime_type }));
+        return new Response(
+          new Blob([new Uint8Array(row.data)], { type: row.mime_type }),
+        );
       },
       PUT: async (req) => {
         if (!isValidId(req.params.id)) {
@@ -168,9 +185,12 @@ const server = Bun.serve({
           typeof body.src !== "string" ||
           (mode !== "inline" && mode !== "display" && mode !== "doc")
         ) {
-          return new Response("Expected { src: string, mode: inline|display|doc }", {
-            status: 400,
-          });
+          return new Response(
+            "Expected { src: string, mode: inline|display|doc }",
+            {
+              status: 400,
+            },
+          );
         }
         const result = await compileTypst(body.src, mode);
         if (!result.ok) {
