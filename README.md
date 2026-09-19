@@ -26,6 +26,10 @@ Example: This blog: [Who needs a runtime?](https://simar-malhotra09.github.io/wr
 
 Update log:
 
+[2026/Sep/19]: Typst previews now persist client-side in IndexedDB (in addition to the server's `.typst-cache/` dir), so reopening a document fills preview badges instantly instead of re-compiling every snippet. Neither cache garbage-collects old entries — each is just a few kb of svg/error text, keyed by the snippet itself.
+
+[2026/Sep/19]: Cleanup note: the `angel01` localStorage draft key is written on every keystroke but read back nowhere. Harmless dead weight for now.
+
 [2026/Sep/11]: Click-to-zoom in exported html. In the exported page, clicking a pasted image, a centred math block ($$ ... $$) or a ```typst block pops it open big on a dimmed screen with some space around it, so dense typst diagrams are actually readable. Click anywhere or press Esc to put it back. Inline $ ... $ math is not clickable, since it sits inside a sentence.
 
 [2026/Sep/8]: Romaji annotations. Select a Japanese word or phrase and press Cmd + Opt + R (Romaji Annotate in the command palette) to put its romaji reading right after it as `{漢字|kanji}`. The reading comes from [cutlet](https://github.com/polm/cutlet) so it needs to be installed; without it the command leaves your text alone and logs the install line to the console). It's stored as plain text so you can fix it by hand, and on HTML export each annotation becomes a real `<ruby>` element with the romaji under the Japanese in a smaller font. On quality
