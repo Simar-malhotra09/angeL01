@@ -18,25 +18,34 @@ import {
 } from "../typst/extract";
 import { fetchTypstSvg } from "../typst/client";
 import { scaleSvgForPreview } from "../typst/svg-size";
-import type { TypstDiagnostic } from "../typst/diagnostics";
+import {
+  TYPST_PAGE_PREAMBLE,
+  type TypstDiagnostic,
+} from "../typst/diagnostics";
+import {
+  getPersistedPreview,
+  putPersistedPreview,
+  type CachedPreview,
+} from "../typst/preview-cache";
 
 interface PreviewState {
   readonly keys: ReadonlySet<string>;
   readonly seq: number;
 }
 
-interface PreviewEntry {
-  readonly ok: boolean;
-  readonly body: string;
-  readonly at: number;
-  readonly diagnostics?: readonly TypstDiagnostic[];
-}
+type PreviewEntry = CachedPreview;
 
 const previewCache = new Map<string, PreviewEntry>();
 const pending = new Map<string, Promise<PreviewEntry>>();
 
 function cacheKey(mode: TypstSnippetMode, src: string): string {
   return `${mode}:${src}`;
+}
+
+// Key for the cache that survives reloads. Folded-in preamble so stale svgs
+// invalidate when the wrapping source changes, matching the server's cache.
+function persistKey(key: string): string {
+  return `${TYPST_PAGE_PREAMBLE}${key}`;
 }
 
 async function compileSnippet(
@@ -52,7 +61,17 @@ async function compileSnippet(
   if (inFlight !== undefined) {
     return inFlight;
   }
-  const job = fetchTypstSvg(src, mode).then((result) => {
+  const job = (async (): Promise<PreviewEntry> => {
+    try {
+      const persisted = await getPersistedPreview(persistKey(key));
+      if (persisted !== null) {
+        previewCache.set(key, persisted);
+        return persisted;
+      }
+    } catch {
+      // indexeddb unavailable (e.g. private mode) — just compile instead
+    }
+    const result = await fetchTypstSvg(src, mode);
     const entry: PreviewEntry = {
       ok: result.ok,
       body: result.body,
@@ -62,11 +81,18 @@ async function compileSnippet(
         : {}),
     };
     previewCache.set(key, entry);
-    pending.delete(key);
+    // network failures are transient — don't freeze them into the stored cache
+    if (!result.network) {
+      void putPersistedPreview(persistKey(key), entry).catch(() => {});
+    }
     return entry;
-  });
+  })();
   pending.set(key, job);
-  return job;
+  try {
+    return await job;
+  } finally {
+    pending.delete(key);
+  }
 }
 
 export const setTypstPreviewsEffect = StateEffect.define<ReadonlySet<string>>();
@@ -272,6 +298,10 @@ const typstPreviewTheme: Extension = EditorView.baseTheme({
   ".cm-typst-preview": {
     position: "relative",
     display: "inline-block",
+    // reserve the width of the "preview" label so flipping to the bolder
+    // "error" label doesn't reflow the surrounding line
+    minWidth: "7ch",
+    textAlign: "center",
     marginLeft: "6px",
     padding: "0 5px",
     fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace',
