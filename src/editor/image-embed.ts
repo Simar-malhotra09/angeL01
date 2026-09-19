@@ -1,5 +1,6 @@
 import { EditorState, RangeSetBuilder, StateField, type Transaction } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view";
+import { getImageSize, putImageSize } from "../image/image-size";
 import { getImage } from "../image/image-store";
 
 const BLOCK_IMAGE_RE = /^!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)$/;
@@ -23,6 +24,15 @@ class ImageBlockWidget extends WidgetType {
     img.alt = this.label;
     wrapper.appendChild(img);
 
+    // reserve the final box up front so the page doesn't reflow when the
+    // blob arrives; sizes come from insert time and, for images this device
+    // has never rendered, are re-learned from the first load below
+    const size = getImageSize(this.id);
+    if (size !== null) {
+      img.style.aspectRatio = `${size.width} / ${size.height}`;
+      img.style.width = `${size.width}px`;
+    }
+
     if (this.label.length > 0) {
       const caption = document.createElement("div");
       caption.className = "cm-image-caption";
@@ -30,7 +40,12 @@ class ImageBlockWidget extends WidgetType {
       wrapper.appendChild(caption);
     }
 
-    img.addEventListener("load", () => view.requestMeasure());
+    img.addEventListener("load", () => {
+      if (size === null && img.naturalWidth > 0 && img.naturalHeight > 0) {
+        putImageSize(this.id, img.naturalWidth, img.naturalHeight);
+      }
+      view.requestMeasure();
+    });
     void getImage(this.id).then((blob) => {
       if (blob === null) {
         return;
