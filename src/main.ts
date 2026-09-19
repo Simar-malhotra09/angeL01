@@ -144,21 +144,10 @@ async function main(): Promise<void> {
       });
     };
     jump();
-    // typst previews and images keep resizing the page for a moment after
-    // load, so re-jump a few times — stopping early once the user does
-    // something on purpose.
-    const rejump = setInterval(jump, 200);
-    const stopRejumping = (): void => clearInterval(rejump);
-    setTimeout(stopRejumping, 3000);
-    view.scrollDOM.addEventListener("wheel", stopRejumping, { once: true });
-    view.scrollDOM.addEventListener("touchstart", stopRejumping, {
-      once: true,
-      passive: true,
-    });
-    view.scrollDOM.addEventListener("mousedown", stopRejumping, {
-      once: true,
-    });
-    document.addEventListener("keydown", stopRejumping, { once: true });
+    // images and typst previews reserve their final size before they load,
+    // so the page no longer shifts around after load — one more jump next
+    // frame covers the editor's own initial layout settling.
+    requestAnimationFrame(jump);
   }
 
   // keep the centred text column clear of the fixed sidebars: the toc needs
