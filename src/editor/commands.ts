@@ -3,6 +3,7 @@ import type { Command } from "@codemirror/view";
 import {
   toggleBold,
   toggleItalic,
+  toggleStrike,
   makeToggleHeading,
   insertLink,
   toggleCodeBlock,
@@ -91,6 +92,7 @@ export function createPaletteCommands(
   return [
     { id: "bold", label: "Bold", keys: "Mod-b", run: toggleBold },
     { id: "italic", label: "Italic", keys: "Mod-i", run: toggleItalic },
+    { id: "strikethrough", label: "Strikethrough", keys: "Mod-Shift-s", run: toggleStrike },
     {
       id: "heading-1",
       label: "Heading 1",

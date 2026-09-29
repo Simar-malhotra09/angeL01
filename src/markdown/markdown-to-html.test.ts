@@ -25,6 +25,13 @@ test("nested emphasis-style content does not hang", () => {
   expect(html).toBe("<p><strong>bold with words</strong> then <em>em</em> then <em>em2</em></p>");
 });
 
+test("single-tilde strikethrough renders, double tilde does not half-match", () => {
+  const { html } = renderMarkdownToHtml("a ~gone~ b", noImages);
+  expect(html).toBe("<p>a <del>gone</del> b</p>");
+  const { html: dbl } = renderMarkdownToHtml("a ~~gone~~ b", noImages);
+  expect(dbl).toBe("<p>a ~~gone~~ b</p>");
+});
+
 test("plain lines and links still render", () => {
   const { html } = renderMarkdownToHtml("see [docs](https://example.com) now", noImages);
   expect(html).toContain('href="https://example.com"');

@@ -6,6 +6,7 @@ import { parseHeading } from "../markdown/headings";
 
 const BOLD_MARK = "**";
 const ITALIC_MARK = "*";
+const STRIKE_MARK = "~";
 
 function isWrappedWith(doc: string, from: number, to: number, mark: string): boolean {
   const before = doc.slice(from - mark.length, from);
@@ -58,6 +59,7 @@ function toggleWrap(mark: string): Command {
 
 export const toggleBold: Command = toggleWrap(BOLD_MARK);
 export const toggleItalic: Command = toggleWrap(ITALIC_MARK);
+export const toggleStrike: Command = toggleWrap(STRIKE_MARK);
 
 export function makeToggleHeading(level: 1 | 2 | 3): Command {
   return (view) => {

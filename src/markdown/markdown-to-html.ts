@@ -17,6 +17,7 @@ export interface RenderedMarkdown {
 const BOLD_RE = /\*\*(.+?)\*\*/g;
 const ITALIC_RE = /(?<!\*)\*([^\n*]+)\*(?!\*)/g;
 const UNDERSCORE_ITALIC_RE = /(?<!\w)_([^\n_]+)_(?!\w)/g;
+const STRIKE_RE = /(?<!~)~([^\n~]+)~(?!~)/g;
 const IMAGE_RE = /!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)/g;
 const BLOCK_IMAGE_RE = /^!\[([^\]]*)\]\(image:([a-zA-Z0-9-]+)\)$/;
 const BARE_URL_RE = /https?:\/\/[^\s]+/g;
@@ -87,6 +88,7 @@ export function stripInlineMarkdown(text: string): string {
     .replace(BOLD_RE, (_match, inner: string) => inner)
     .replace(ITALIC_RE, (_match, inner: string) => inner)
     .replace(UNDERSCORE_ITALIC_RE, (_match, inner: string) => inner)
+    .replace(STRIKE_RE, (_match, inner: string) => inner)
     .replace(RUBY_RE, (_match, base: string) => base);
 }
 
@@ -113,6 +115,7 @@ function collectInlineSpans(lineText: string, resolveImage: ImageResolver): Inli
   collect(BOLD_RE, (match) => `<strong>${renderLineInline(match[1]!, resolveImage)}</strong>`);
   collect(ITALIC_RE, (match) => `<em>${renderLineInline(match[1]!, resolveImage)}</em>`);
   collect(UNDERSCORE_ITALIC_RE, (match) => `<em>${renderLineInline(match[1]!, resolveImage)}</em>`);
+  collect(STRIKE_RE, (match) => `<del>${renderLineInline(match[1]!, resolveImage)}</del>`);
   collect(RUBY_RE, (match) => renderRubySpan(match[1]!, match[2]!));
 
   candidates.sort((a, b) => a.from - b.from || a.to - b.to);

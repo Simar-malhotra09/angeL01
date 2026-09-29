@@ -61,7 +61,10 @@ export function buildTypstSource(src: string, mode: TypstSnippetMode): string {
   return `${PAGE_PREAMBLE}${src}`;
 }
 
-export async function compileTypst(src: string, mode: TypstSnippetMode): Promise<TypstCompileResult> {
+export async function compileTypst(
+  src: string,
+  mode: TypstSnippetMode,
+): Promise<TypstCompileResult> {
   if (src.trim().length === 0) {
     return { ok: false, detail: "empty snippet", diagnostics: [] };
   }
@@ -116,7 +119,9 @@ export async function compileTypst(src: string, mode: TypstSnippetMode): Promise
   if (exitCode !== 0 || !existsSync(svgPath)) {
     unlinkSync(typPath);
     const diagnostics = parseTypstDiagnostics(stderr, src, mode);
-    const errorsOnly = diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+    const errorsOnly = diagnostics.filter(
+      (diagnostic) => diagnostic.severity === "error",
+    );
     if (errorsOnly.length > 0) {
       return {
         ok: false,

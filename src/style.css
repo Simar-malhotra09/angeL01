@@ -264,6 +264,10 @@ body {
   font-style: italic;
 }
 
+.cm-md-strike {
+  text-decoration: line-through;
+}
+
 .cm-md-heading-1,
 .cm-md-heading-2,
 .cm-md-heading-3 {

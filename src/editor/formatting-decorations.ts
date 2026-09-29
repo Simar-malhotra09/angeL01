@@ -27,6 +27,7 @@ const codeBlockDecos = {
   }),
 };
 const italicTextDeco = Decoration.mark({ class: "cm-md-italic" });
+const strikeTextDeco = Decoration.mark({ class: "cm-md-strike" });
 const imageLabelDeco = Decoration.mark({ class: "cm-md-image-label" });
 const linkLabelDeco = Decoration.mark({ class: "cm-md-link-label" });
 const romajiTextDeco = Decoration.mark({ class: "cm-md-romaji" });
@@ -37,6 +38,7 @@ const headingLineDeco = [1, 2, 3].map((level) =>
 const BOLD_RE = /\*\*(.+?)\*\*/g;
 const ITALIC_RE = /(?<!\*)\*([^\n*]+)\*(?!\*)/g;
 const UNDERSCORE_ITALIC_RE = /(?<!\w)_([^\n_]+)_(?!\w)/g;
+const STRIKE_RE = /(?<!~)~([^\n~]+)~(?!~)/g;
 
 function normalizeUnderscoreItalics(lineText: string): string {
   UNDERSCORE_ITALIC_RE.lastIndex = 0;
@@ -104,6 +106,20 @@ function collectLineSpecs(
     specs.push(
       { from: start, to: innerStart, deco: markerDeco(active) },
       { from: innerStart, to: innerEnd, deco: italicTextDeco },
+      { from: innerEnd, to: end, deco: markerDeco(active) },
+    );
+  }
+
+  STRIKE_RE.lastIndex = 0;
+  while ((match = STRIKE_RE.exec(lineText)) !== null) {
+    const start = lineFrom + match.index;
+    const innerStart = start + 1;
+    const innerEnd = innerStart + match[1]!.length;
+    const end = innerEnd + 1;
+    const active = touchesSelection(selectionRanges, start, end);
+    specs.push(
+      { from: start, to: innerStart, deco: markerDeco(active) },
+      { from: innerStart, to: innerEnd, deco: strikeTextDeco },
       { from: innerEnd, to: end, deco: markerDeco(active) },
     );
   }
